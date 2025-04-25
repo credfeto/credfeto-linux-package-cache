@@ -14,7 +14,7 @@ services:
       - cache-pacoloco:/var/cache/pacoloco
       - ./pacoloco.yaml:/etc/pacoloco.yaml:r
     ports:
-      - 9129:9129
+      - 7878:9129
 #   if a specific user id is provided, you have to make sure
 #   the mounted directories have the same user id owner on host
 #   user: 1000:1000
