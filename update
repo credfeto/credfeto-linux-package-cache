@@ -7,16 +7,16 @@ die() {
 }
 
 
-[ -d /cache/arch-linux ] || sudo mkdir /cache/arch-linux
+[ -d /cache/arch-pkgs ] || sudo mkdir /cache/arch-pkgs
 
 git pull
 
-#sudo chown -R 10001:65533 /cache/arch-linux || die "Could not set npm permissions"
+#sudo chown -R 10001:65533 /cache/arch-pkgs || die "Could not set npm permissions"
 
 sudo docker volume create \
   --opt type=none \
   --opt o=bind \
-  --opt device=/cache/arch-linux \
+  --opt device=/cache/arch-pkgs \
   cache-pacoloco
 
 sudo docker compose pull || die "Could not pull images"
