@@ -1,0 +1,25 @@
+#! /bin/sh
+
+die() {
+    echo
+    echo "$@"
+    exit 1
+}
+
+
+[ -d /cache/arch-linux ] || sudo mkdir /cache/arch-linux
+
+git pull
+
+#sudo chown -R 10001:65533 /cache/arch-linux || die "Could not set npm permissions"
+
+sudo docker volume create \
+  --opt type=none \
+  --opt o=bind \
+  --opt device=/cache/arch-linux \
+  cache-pacoloco
+
+sudo docker compose pull || die "Could not pull images"
+sudo docker compose build || die "Could not build images"
+
+sudo docker compose up -d --remove-orphans || die "Could not start containers"

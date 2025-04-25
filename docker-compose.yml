@@ -1,0 +1,27 @@
+services:
+  pacoloco:
+    #   to pull the image from github's registry:
+    image: ghcr.io/anatol/pacoloco:latest
+    container_name: cache-pacoloco
+    hostname: pacoloco
+    restart: always
+    stop_grace_period: 500s
+    stop_signal: SIGINT
+    environment:
+      #   to set time zone within the container for cron and log timestamps:
+      - TZ=Europe/London
+    volumes:
+      - cache-pacoloco:/var/cache/pacoloco
+      - ./pacoloco.yaml:/etc/pacoloco.yaml:r
+    ports:
+      - 9129:9129
+#   if a specific user id is provided, you have to make sure
+#   the mounted directories have the same user id owner on host
+#   user: 1000:1000
+#   or replace it for self-building with:
+#    build: https://github.com/anatol/pacoloco.git
+
+volumes:
+  cache-pacoloco:
+    name: cache-pacoloco
+    external: true
