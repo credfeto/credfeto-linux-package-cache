@@ -7,7 +7,7 @@ services:
     stop_signal: SIGINT
     volumes:
       - ./certs:/etc/nginx/ssl:r
-      - linux_nginx_cache:/var/cache/nginx/proxy
+      - cache-flathub:/var/cache/nginx/proxy
     ports:
       - 7777:7777/tcp
 

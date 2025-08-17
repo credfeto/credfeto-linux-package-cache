@@ -17,8 +17,8 @@ git pull
 sudo docker volume create \
   --opt type=none \
   --opt o=bind \
-  --opt device=/cache/flathub-flathub \
-  cache-pacoloco
+  --opt device=/cache/flathub-pkgs \
+  cache-flathub
 
 sudo docker volume create \
   --opt type=none \
