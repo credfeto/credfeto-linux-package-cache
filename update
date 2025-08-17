@@ -8,10 +8,17 @@ die() {
 
 
 [ -d /cache/arch-pkgs ] || sudo mkdir /cache/arch-pkgs
+[ -d /cache/flathub-pkgs ] || sudo mkdir /cache/flathub-pkgs
 
 git pull
 
 #sudo chown -R 10001:65533 /cache/arch-pkgs || die "Could not set npm permissions"
+
+sudo docker volume create \
+  --opt type=none \
+  --opt o=bind \
+  --opt device=/cache/flathub-flathub \
+  cache-pacoloco
 
 sudo docker volume create \
   --opt type=none \
