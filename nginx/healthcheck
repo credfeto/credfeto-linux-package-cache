@@ -7,6 +7,6 @@ if [ -z "$CHECK_TASK_PID" ]; then
 fi
 
 # Check to see if nginx is responding
-curl --fail http://localhost/health || exit 1
+curl --fail http://localhost:7777/health || exit 1
 
 exit 0
