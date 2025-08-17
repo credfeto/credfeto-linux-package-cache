@@ -10,6 +10,7 @@ services:
       - cache-flathub:/var/cache/nginx/proxy
     ports:
       - 7777:7777/tcp
+      - 7777:7777/udp
 
   cache-pacoloco:
     #   to pull the image from github's registry:
