@@ -23,7 +23,7 @@ services:
       #   to set time zone within the container for cron and log timestamps:
       - TZ=Europe/London
     volumes:
-      - cache-pacoloco:/var/cache/nginx/proxy
+      - cache-pacoloco:/var/cache/pacoloco:rw
       - ./pacoloco.yaml:/etc/pacoloco.yaml:r
     ports:
       - 7878:7878
