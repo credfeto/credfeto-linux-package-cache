@@ -1,5 +1,18 @@
 services:
-  pacoloco:
+  linux-flathub:
+    build: ./nginx
+    container_name: linux-flathub
+    restart: always
+    stop_grace_period: 5s
+    stop_signal: SIGINT
+    volumes:
+      - ./certs:/etc/nginx/ssl:r
+      - linux_nginx_cache:/var/cache/nginx/proxy
+    ports:
+      - 7777:7777/tcp
+
+
+  linux-pacoloco:
     #   to pull the image from github's registry:
     image: ghcr.io/anatol/pacoloco:latest
     container_name: cache-pacoloco
@@ -11,10 +24,10 @@ services:
       #   to set time zone within the container for cron and log timestamps:
       - TZ=Europe/London
     volumes:
-      - cache-pacoloco:/var/cache/pacoloco
+      - cache-pacoloco:/var/cache/nginx/proxy
       - ./pacoloco.yaml:/etc/pacoloco.yaml:r
     ports:
-      - 7878:9129
+      - 7878:7878
 #   if a specific user id is provided, you have to make sure
 #   the mounted directories have the same user id owner on host
 #   user: 1000:1000
@@ -22,6 +35,9 @@ services:
 #    build: https://github.com/anatol/pacoloco.git
 
 volumes:
+  cache-flathub:
+    name: cache-flathub
+    external: true
   cache-pacoloco:
     name: cache-pacoloco
     external: true
