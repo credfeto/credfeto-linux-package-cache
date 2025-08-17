@@ -10,9 +10,6 @@ COPY healthcheck .
 
 
 # Http port
-EXPOSE 5554/tcp
-
-# Https port
-EXPOSE 5555/tcp
+EXPOSE 7777/tcp
 
 HEALTHCHECK --interval=5s --timeout=2s --retries=3 --start-period=60s CMD [ "/usr/src/app/healthcheck" ]

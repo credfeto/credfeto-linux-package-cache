@@ -1,7 +1,7 @@
 services:
-  linux-flathub:
+  cache-flathub:
     build: ./nginx
-    container_name: linux-flathub
+    container_name: cache-flathub
     restart: always
     stop_grace_period: 5s
     stop_signal: SIGINT
@@ -11,8 +11,7 @@ services:
     ports:
       - 7777:7777/tcp
 
-
-  linux-pacoloco:
+  cache-pacoloco:
     #   to pull the image from github's registry:
     image: ghcr.io/anatol/pacoloco:latest
     container_name: cache-pacoloco
