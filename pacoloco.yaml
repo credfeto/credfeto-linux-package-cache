@@ -7,8 +7,24 @@ purge_files_after: 2592000 ## purge file after 30 days
 
 repos:
   archlinux:
-    mirrorlist: /etc/pacman.d/reflector_mirrorlist
-#    urls: ## add or change official mirror urls as desired, see https://archlinux.org/mirrors/status/
+    # mirrorlist: /etc/pacman.d/reflector_mirrorlist
+    urls: ## add or change official mirror urls as desired, see https://archlinux.org/mirrors/status/
+      - https://london.mirror.pkgbuild.com
+      - https://archlinux.uk.mirror.allworldit.com/archlinux
+      - https://repo.c48.uk/arch
+      - https://uk.repo.c48.uk/arch
+      - https://mirrors.melbourne.co.uk/archlinux
+      - https://gb.mirrors.cicku.me/archlinux
+      - https://mirror.server.net/archlinux
+      - https://www.mirrorservice.org/sites/ftp.archlinux.org
+      - https://repo.slithery.uk
+      - https://mirrors.ukfast.co.uk/sites/archlinux.org
+      - https://mirror.st2projects.com/archlinux
+      - https://mirror.netweaver.uk/archlinux
+      - https://mirror.cov.ukservers.com/archlinux
+      - https://lon.mirror.rackspace.com/archlinux
+
+
 #      - https://london.mirror.pkgbuild.com
 #      - https://archlinux.uk.mirror.allworldit.com/archlinux
 #      - https://gb.mirrors.cicku.me/archlinux
