@@ -7,75 +7,22 @@ purge_files_after: 2592000 ## purge file after 30 days
 
 repos:
   archlinux:
-    # mirrorlist: /etc/pacman.d/reflector_mirrorlist
-    urls: ## add or change official mirror urls as desired, see https://archlinux.org/mirrors/status/
-      - https://london.mirror.pkgbuild.com
-      - https://archlinux.uk.mirror.allworldit.com/archlinux
-      - https://repo.c48.uk/arch
-      - https://uk.repo.c48.uk/arch
-      - https://mirrors.melbourne.co.uk/archlinux
-      - https://gb.mirrors.cicku.me/archlinux
-      - https://mirror.server.net/archlinux
-      - https://www.mirrorservice.org/sites/ftp.archlinux.org
-      - https://repo.slithery.uk
-      - https://mirrors.ukfast.co.uk/sites/archlinux.org
-      - https://mirror.st2projects.com/archlinux
-      - https://mirror.netweaver.uk/archlinux
-      - https://mirror.cov.ukservers.com/archlinux
-      - https://lon.mirror.rackspace.com/archlinux
-
-
+    mirrorlist: /etc/pacman.d/reflector_mirrorlist
+#    urls: ## add or change official mirror urls as desired, see https://archlinux.org/mirrors/status/
 #      - https://london.mirror.pkgbuild.com
 #      - https://archlinux.uk.mirror.allworldit.com/archlinux
-#      - https://gb.mirrors.cicku.me/archlinux
+#      - https://repo.c48.uk/arch
+#      - https://uk.repo.c48.uk/arch
 #      - https://mirrors.melbourne.co.uk/archlinux
+#      - https://gb.mirrors.cicku.me/archlinux
 #      - https://mirror.server.net/archlinux
+#      - https://www.mirrorservice.org/sites/ftp.archlinux.org
+#      - https://repo.slithery.uk
+#      - https://mirrors.ukfast.co.uk/sites/archlinux.org
 #      - https://mirror.st2projects.com/archlinux
 #      - https://mirror.netweaver.uk/archlinux
-#      - https://mirror.bytemark.co.uk/archlinux
-#      - https://repo.slithery.uk
-#      - https://repo.c48.uk/arch
-#      - https://mirrors.ukfast.co.uk/sites/archlinux.org
-#      - https://www.mirrorservice.org/sites/ftp.archlinux.org
-#      - https://mirrors.xhosts.co.uk/arch
+#      - https://mirror.cov.ukservers.com/archlinux
 #      - https://lon.mirror.rackspace.com/archlinux
-#      - https://mirror.vinehost.net/archlinux
-
-#  core-x86-64-v3:
-#    urls:
-#      - https://cdn.alhp.dev/core-x86-64-v3/os
-#      - https://alhp.krautflare.de/core-x86-64-v3/os
-#      - https://mirror.sunred.org/alhp/core-x86-64-v3/os
-#      - https://alhp.nox.panibrez.com/core-x86-64-v3/os
-#      - https://alhp.dev/core-x86-64-v3/os
-#      - https://mirrors.dotsrc.org/alhp/core-x86-64-v3/os
-#
-#  core-x86-64-v2:
-#   urls:
-#      - https://cdn.alhp.dev/core-x86-64-v2/os
-#      - https://alhp.krautflare.de/core-x86-64-v2/os
-#      - https://mirror.sunred.org/alhp/core-x86-64-v2/os
-#      - https://alhp.nox.panibrez.com/core-x86-64-v2/os
-#      - https://alhp.dev/core-x86-64-v2/os
-#      - https://mirrors.dotsrc.org/alhp/core-x86-64-v2/os
-#
-#  extra-x86-64-v3:
-#   urls:
-#      - https://cdn.alhp.dev/extra-x86-64-v3/os
-#      - https://alhp.krautflare.de/extra-x86-64-v3/os
-#      - https://mirror.sunred.org/alhp/extra-x86-64-v3/os
-#      - https://alhp.nox.panibrez.com/extra-x86-64-v3/os
-#      - https://alhp.dev/extra-x86-64-v3/os
-#      - https://mirrors.dotsrc.org/alhp/extra-x86-64-v3/os
-#
-#  extra-x86-64-v2:
-#   urls:
-#      - https://cdn.alhp.dev/extra-x86-64-v2/os
-#      - https://alhp.krautflare.de/extra-x86-64-v2/os
-#      - https://mirror.sunred.org/alhp/extra-x86-64-v2/os
-#      - https://alhp.nox.panibrez.com/extra-x86-64-v2/os
-#      - https://alhp.dev/extra-x86-64-v2/os
-#      - https://mirrors.dotsrc.org/alhp/extra-x86-64-v2/os
 
   chaotic-aur:
     urls:
