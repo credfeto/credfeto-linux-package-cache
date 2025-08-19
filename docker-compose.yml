@@ -21,13 +21,14 @@ services:
     stop_grace_period: 500s
     stop_signal: SIGINT
     environment:
-      #   to set time zone within the container for cron and log timestamps:
+      #   to set time-zone within the container for cron and log timestamps:
       - TZ=Europe/London
     volumes:
       - cache-pacoloco:/var/cache/pacoloco:rw
       - ./pacoloco.yaml:/etc/pacoloco.yaml:r
+      - ./mirrorlist:/etc/pacman.d/reflector_mirrorlist:r
     ports:
-      - 7878:7878
+      - "7878:7878"
 #   if a specific user id is provided, you have to make sure
 #   the mounted directories have the same user id owner on host
 #   user: 1000:1000

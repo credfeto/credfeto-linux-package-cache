@@ -7,22 +7,23 @@ purge_files_after: 2592000 ## purge file after 30 days
 
 repos:
   archlinux:
-    urls: ## add or change official mirror urls as desired, see https://archlinux.org/mirrors/status/
-      - https://london.mirror.pkgbuild.com
-      - https://archlinux.uk.mirror.allworldit.com/archlinux
-      - https://gb.mirrors.cicku.me/archlinux
-      - https://mirrors.melbourne.co.uk/archlinux
-      - https://mirror.server.net/archlinux
-      - https://mirror.st2projects.com/archlinux
-      - https://mirror.netweaver.uk/archlinux
-      - https://mirror.bytemark.co.uk/archlinux
-      - https://repo.slithery.uk
-      - https://repo.c48.uk/arch
-      - https://mirrors.ukfast.co.uk/sites/archlinux.org
-      - https://www.mirrorservice.org/sites/ftp.archlinux.org
-      - https://mirrors.xhosts.co.uk/arch
-      - https://lon.mirror.rackspace.com/archlinux
-      - https://mirror.vinehost.net/archlinux
+    mirrorlist: /etc/pacman.d/reflector_mirrorlist
+#    urls: ## add or change official mirror urls as desired, see https://archlinux.org/mirrors/status/
+#      - https://london.mirror.pkgbuild.com
+#      - https://archlinux.uk.mirror.allworldit.com/archlinux
+#      - https://gb.mirrors.cicku.me/archlinux
+#      - https://mirrors.melbourne.co.uk/archlinux
+#      - https://mirror.server.net/archlinux
+#      - https://mirror.st2projects.com/archlinux
+#      - https://mirror.netweaver.uk/archlinux
+#      - https://mirror.bytemark.co.uk/archlinux
+#      - https://repo.slithery.uk
+#      - https://repo.c48.uk/arch
+#      - https://mirrors.ukfast.co.uk/sites/archlinux.org
+#      - https://www.mirrorservice.org/sites/ftp.archlinux.org
+#      - https://mirrors.xhosts.co.uk/arch
+#      - https://lon.mirror.rackspace.com/archlinux
+#      - https://mirror.vinehost.net/archlinux
 
 #  core-x86-64-v3:
 #    urls:
