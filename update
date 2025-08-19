@@ -6,11 +6,16 @@ die() {
     exit 1
 }
 
+BASEDIR="$(dirname "$(readlink -f "$0")")"
+
 
 [ -d /cache/arch-pkgs ] || sudo mkdir /cache/arch-pkgs
 [ -d /cache/flathub-pkgs ] || sudo mkdir /cache/flathub-pkgs
 
 git pull
+
+
+reflector --protocol https --fastest 20 --sort age --save "$BASEDIR/mirrorlist"
 
 #sudo chown -R 10001:65533 /cache/arch-pkgs || die "Could not set npm permissions"
 
