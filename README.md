@@ -11,6 +11,9 @@ Pacman Repos:
 Flatpak repos
 * Flathub
 
+AUR
+* note this is an experimental cache/proxy, and still hits the aur RPC to get package metadata
+
 ## Server Setup
 
 ```bash
