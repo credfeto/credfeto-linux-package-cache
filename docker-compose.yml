@@ -1,4 +1,14 @@
 services:
+  cache-aur-rpc:
+    image: docker-registry.markridgwell.com/credfeto/cache-aur:latest
+    container_name: cache-aur-rpc
+    restart: always
+    stop_grace_period: 5s
+    stop_signal: SIGINT
+    volumes:
+      - cache-aur-metadata:/data/metadata
+      - cache-aur-repos:/data/repos
+
   cache-flathub:
     build: ./nginx
     container_name: cache-flathub
@@ -36,6 +46,12 @@ services:
 #    build: https://github.com/anatol/pacoloco.git
 
 volumes:
+  cache-aur-metadata:
+    name: cache-aur-metadata
+    external: true
+  cache-aur-repos:
+    name: cache-aur-repos
+    external: true
   cache-flathub:
     name: cache-flathub
     external: true
