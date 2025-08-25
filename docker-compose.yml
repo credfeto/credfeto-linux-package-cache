@@ -9,6 +9,8 @@ services:
     volumes:
       - cache-aur-metadata:/data/metadata
       - cache-aur-repos:/data/repos
+    networks:
+      backend:
 
   cache-aur-repos:
     image: rockstorm/gitweb:latest
@@ -19,6 +21,8 @@ services:
     stop_signal: SIGINT
     volumes:
       - cache-aur-repos:/srv/git:ro
+    networks:
+      backend:
 
   cache-aur:
     build: ./aur
@@ -33,6 +37,9 @@ services:
         condition: service_healthy
       cache-aur-repos:
         condition: service_started
+    networks:
+      backend:
+      frontend:
 
   cache-flathub:
     build: ./flathub
@@ -45,6 +52,8 @@ services:
       - cache-flathub:/var/cache/nginx/proxy
     ports:
       - "7777:7777/tcp"
+    networks:
+      frontend:
 
   cache-pacoloco:
     #   to pull the image from github's registry:
@@ -63,11 +72,20 @@ services:
       - ./mirrorlist:/etc/pacman.d/reflector_mirrorlist:r
     ports:
       - "7878:7878"
+    networks:
+      frontend:
 #   if a specific user id is provided, you have to make sure
 #   the mounted directories have the same user id owner on host
 #   user: 1000:1000
 #   or replace it for self-building with:
 #    build: https://github.com/anatol/pacoloco.git
+
+networks:
+  backend:
+    driver: bridge
+
+  frontend:
+    driver: bridge
 
 volumes:
   cache-aur-metadata:
