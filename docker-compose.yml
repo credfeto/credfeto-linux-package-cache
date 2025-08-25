@@ -19,7 +19,6 @@ services:
     restart: always
     stop_grace_period: 5s
     stop_signal: SIGINT
-    user: 1654:1654
     volumes:
       - cache-aur-repos:/srv/git:ro
     networks:
