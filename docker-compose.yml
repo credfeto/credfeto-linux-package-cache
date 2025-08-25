@@ -18,6 +18,16 @@ services:
     volumes:
       - cache-aur-repos:/srv/git:ro
 
+  cache-aur:
+    build: ./aur
+    container_name: cache-aur
+    restart: always
+    stop_grace_period: 5s
+    stop_signal: SIGINT
+    ports:
+      - 7776:7776/tcp
+      - 7776:7776/udp
+
   cache-flathub:
     build: ./flathub
     container_name: cache-flathub

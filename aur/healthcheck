@@ -1,0 +1,27 @@
+#! /bin/sh
+
+# Check if nginx process is running
+CHECK_TASK_PID=$(pidof nginx)
+if [ -z "$CHECK_TASK_PID" ]; then
+    exit 1
+fi
+
+# Check to see if nginx is responding
+curl --fail http://localhost/health || exit 1
+
+## Check to see if api nuget can be accessed
+#curl --fail --insecure https://api.nuget.local:5555/ping?source=nginx-api.nuget.local\&should_bypass_cache=true || exit 1
+#
+## Check to see if funfair nuget can be accessed
+#curl --fail --insecure https://funfair.nuget.local:5555/ping?source=nginx-funfair.nuget.local\&should_bypass_cache=true || exit 1
+#
+## Check to see if funfair pre-release nuget can be accessed
+#curl --fail --insecure https://funfair-prerelease.nuget.local:5555/ping?source=nginx-funfair-prerelease.nuget.local\&should_bypass_cache=true || exit 1
+#
+## Check to see if dotnet cache can be accessed
+#curl --fail --insecure https://builds.dotnet.local:5555/ping?source=nginx-builds.dotnet.local\&should_bypass_cache=true || exit 1
+#
+## Check to see if npm nuget can be accessed
+#curl --fail --insecure https://npm.local:5555/-/ping?should_bypass_cache=true || exit 1
+
+exit 0
