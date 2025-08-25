@@ -2,6 +2,7 @@ services:
   cache-aur-rpc:
     image: docker-registry.markridgwell.com/credfeto/aur-proxy:latest
     container_name: cache-aur-rpc
+    hostname: cache-aur-rpc
     restart: always
     stop_grace_period: 5s
     stop_signal: SIGINT
@@ -12,6 +13,7 @@ services:
   cache-aur-repos:
     image: rockstorm/gitweb:latest
     container_name: cache-aur-repos
+    hostname: cache-aur-repos
     restart: always
     stop_grace_period: 5s
     stop_signal: SIGINT
