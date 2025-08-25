@@ -9,6 +9,15 @@ services:
       - cache-aur-metadata:/data/metadata
       - cache-aur-repos:/data/repos
 
+  cache-aur-repos:
+    image: rockstorm/gitweb:latest
+    container_name: cache-aur-repos
+    restart: always
+    stop_grace_period: 5s
+    stop_signal: SIGINT
+    volumes:
+      - cache-aur-repos:/srv/git:ro
+
   cache-flathub:
     build: ./flathub
     container_name: cache-flathub
