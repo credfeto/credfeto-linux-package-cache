@@ -14,6 +14,9 @@ BASEDIR="$(dirname "$(readlink -f "$0")")"
 [ -d /cache/aur/metadata ] || sudo mkdir /cache/aur/metadata
 [ -d /cache/aur/repos ] || sudo mkdir /cache/aur/repos
 
+sudo chown -R 998:998 /cache/aur/metadata || die "Could not set aur/metadata permissions"
+sudo chown -R 998:998 /cache/aur/repos || die "Could not set aur/repos permissions"
+
 git pull
 
 
