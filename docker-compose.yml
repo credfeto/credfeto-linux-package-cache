@@ -10,7 +10,7 @@ services:
       - cache-aur-repos:/data/repos
 
   cache-flathub:
-    build: ./nginx
+    build: ./flathub
     container_name: cache-flathub
     restart: always
     stop_grace_period: 5s
