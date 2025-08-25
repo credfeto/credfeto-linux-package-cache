@@ -7,8 +7,8 @@ services:
     stop_grace_period: 5s
     stop_signal: SIGINT
     volumes:
-      - cache-aur-metadata:/data/metadata
-      - cache-aur-repos:/data/repos
+      - cache-aur-metadata:/data/metadata:rw
+      - cache-aur-repos:/data/repos:rw
     networks:
       backend:
 
