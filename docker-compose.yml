@@ -26,6 +26,11 @@ services:
     stop_signal: SIGINT
     ports:
       - "7776:7776/tcp"
+    depends_on:
+      cache-aur-rpc:
+        condition: service_healthy
+      cache-aur-repos:
+        condition: service_started
 
   cache-flathub:
     build: ./flathub
