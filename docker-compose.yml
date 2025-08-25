@@ -25,8 +25,7 @@ services:
     stop_grace_period: 5s
     stop_signal: SIGINT
     ports:
-      - 7776:7776/tcp
-      - 7776:7776/udp
+      - "7776:7776/tcp"
 
   cache-flathub:
     build: ./flathub
@@ -38,8 +37,7 @@ services:
       - ./certs:/etc/nginx/ssl:r
       - cache-flathub:/var/cache/nginx/proxy
     ports:
-      - 7777:7777/tcp
-      - 7777:7777/udp
+      - "7777:7777/tcp"
 
   cache-pacoloco:
     #   to pull the image from github's registry:
