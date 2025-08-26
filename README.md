@@ -30,9 +30,9 @@ Additional recommended install
   - 7777 - for flathub
   - 7776 - for aur
 * Use NGINX or front end other front end proxy to resolve more friendly urls and TLS e.g:
-  - https://pacman.example.com points to http://<server>:7878
-  - https://flathub.example.com points to http://<server>:7777
-  - https://aur.example.com points to http://<server>:7776
+  - https://pacman.example.com points to ``http://<server>:7878``
+  - https://flathub.example.com points to ``http://<server>:7777``
+  - https://aur.example.com points to ``http://<server>:7776``
 
 ## Client Setup
 
