@@ -97,6 +97,7 @@ services:
       cache-proxy:
         condition: service_healthy
     networks:
+      backend:
       frontend:
 
   cache-pacoloco:
