@@ -1,4 +1,17 @@
 services:
+  cache-restarter:
+    image: docker-registry.markridgwell.com/credfeto/cache-restarter:latest
+    container_name: cache-restarter
+    hostname: restarter
+    restart: always
+    stop_grace_period: 5s
+    stop_signal: SIGINT
+    network_mode: none
+    cap_drop:
+      - ALL
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
   cache-aur-rpc:
     image: docker-registry.markridgwell.com/credfeto/aur-proxy:latest
     container_name: cache-aur-rpc
@@ -9,6 +22,8 @@ services:
     volumes:
       - cache-aur-metadata:/data/metadata:rw
       - cache-aur-repos:/data/repos:rw
+    labels:
+      - "autoheal=linuxpkg"
     networks:
       backend:
 
@@ -21,6 +36,8 @@ services:
     stop_signal: SIGINT
     volumes:
       - cache-aur-repos:/srv/git:ro
+    labels:
+      - "autoheal=linuxpkg"
     networks:
       backend:
 
@@ -41,6 +58,27 @@ services:
       backend:
       frontend:
 
+  cache-proxy:
+    image: docker-registry.markridgwell.com/credfeto/cache-proxy:latest
+    container_name: devpkg-proxy
+    hostname: proxy
+    restart: always
+    stop_grace_period: 500s
+    stop_signal: SIGINT
+    #    environment:
+    #      - Proxy__UpstreamUrls__0=https://api.nuget.org
+    #      - Proxy__PublicUrl=https://api.nuget.local:5555
+    #      - Proxy__Packages=/data
+    #      - Proxy__JsonMaxAgeSeconds=30
+    ports:
+      - 8000:8080
+    volumes:
+      - cache_proxy:/data
+    labels:
+      - "autoheal=linuxpkg"
+    networks:
+      backend:
+
   cache-flathub:
     build: ./flathub
     container_name: cache-flathub
@@ -52,6 +90,11 @@ services:
       - cache-flathub:/var/cache/nginx/proxy
     ports:
       - "7777:7777/tcp"
+    labels:
+      - "autoheal=linuxpkg"
+    depends_on:
+      cache-proxy:
+        condition: service_healthy
     networks:
       frontend:
 
@@ -72,6 +115,8 @@ services:
       - ./mirrorlist:/etc/pacman.d/reflector_mirrorlist:r
     ports:
       - "7878:7878"
+    labels:
+      - "autoheal=linuxpkg"
     networks:
       frontend:
 #   if a specific user id is provided, you have to make sure
@@ -93,6 +138,9 @@ volumes:
     external: true
   cache-aur-repos:
     name: cache-aur-repos
+    external: true
+  cache-proxy:
+    name: cache-proxy
     external: true
   cache-flathub:
     name: cache-flathub

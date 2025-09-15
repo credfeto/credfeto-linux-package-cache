@@ -1,0 +1,13 @@
+#! /bin/sh
+
+
+while true; do 
+  echo "Sleeping..."
+  sleep 60; 
+
+  echo "Find Unhealthy"
+  docker ps -q -f health=unhealthy -f name=linuxpkg
+
+  echo "Restarting unhealthy"
+  docker ps -q -f health=unhealthy -f name=linuxpkg | xargs --no-run-if-empty docker restart;
+done
