@@ -60,8 +60,8 @@ services:
 
   cache-proxy:
     image: docker-registry.markridgwell.com/credfeto/cache-proxy:latest
-    container_name: devpkg-proxy
-    hostname: proxy
+    container_name: cache-proxy
+    hostname: cache-proxy
     restart: always
     stop_grace_period: 500s
     stop_signal: SIGINT
