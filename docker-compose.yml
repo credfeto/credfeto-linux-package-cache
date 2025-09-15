@@ -1,16 +1,16 @@
 services:
-  cache-restarter:
-    image: docker-registry.markridgwell.com/credfeto/cache-restarter:latest
-    container_name: cache-restarter
-    hostname: cache-restarter
-    restart: always
-    stop_grace_period: 5s
-    stop_signal: SIGINT
-    network_mode: none
-    cap_drop:
-      - ALL
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+#  cache-restarter:
+#    image: docker-registry.markridgwell.com/credfeto/cache-restarter:latest
+#    container_name: cache-restarter
+#    hostname: cache-restarter
+#    restart: always
+#    stop_grace_period: 5s
+#    stop_signal: SIGINT
+#    network_mode: none
+#    cap_drop:
+#      - ALL
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
 
   cache-aur-rpc:
     image: docker-registry.markridgwell.com/credfeto/aur-proxy:latest
