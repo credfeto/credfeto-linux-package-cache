@@ -73,7 +73,7 @@ services:
     ports:
       - 8000:8080
     volumes:
-      - cache_proxy:/data
+      - cache-proxy:/data
       - ./proxy-appsettings.json:/usr/src/app/appsettings-local.json
     labels:
       - "autoheal=linuxpkg"
