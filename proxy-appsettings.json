@@ -1,0 +1,27 @@
+{
+  "Proxy": {
+    "Sites": [
+      {
+        "Source": "localhost",
+        "Target": "https://dl.flathub.org",
+        "Settings": [
+          {
+            "Match": "\\.filez$",
+            "LifeTimeSeconds": 63115200
+          }
+        ]
+      },
+      {
+        "Source": "dl.flathub.local",
+        "Target": "https://dl.flathub.org",
+        "Settings": [
+          {
+            "Match": "\\.filez$",
+            "LifeTimeSeconds": 63115200
+          }
+        ]
+      }
+    ],
+    "Storage": "/data"
+  }
+}
