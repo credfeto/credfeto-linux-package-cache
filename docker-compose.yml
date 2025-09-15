@@ -2,7 +2,7 @@ services:
   cache-restarter:
     image: docker-registry.markridgwell.com/credfeto/cache-restarter:latest
     container_name: cache-restarter
-    hostname: restarter
+    hostname: cache-restarter
     restart: always
     stop_grace_period: 5s
     stop_signal: SIGINT
