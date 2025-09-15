@@ -10,7 +10,7 @@ BASEDIR="$(dirname "$(readlink -f "$0")")"
 
 [ -d /cache/arch-pkgs ] || sudo mkdir /cache/arch-pkgs
 [ -d /cache/flathub-pkgs ] || sudo mkdir /cache/flathub-pkgs
-[ -d /cache/proxt ] || sudo mkdir /cache/proxy
+[ -d /cache/proxy ] || sudo mkdir /cache/proxy
 [ -d /cache/aur ] || sudo mkdir /cache/aur
 [ -d /cache/aur/metadata ] || sudo mkdir /cache/aur/metadata
 [ -d /cache/aur/repos ] || sudo mkdir /cache/aur/repos
