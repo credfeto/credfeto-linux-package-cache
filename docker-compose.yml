@@ -117,6 +117,7 @@ services:
       - cache-pacoloco:/var/cache/pacoloco:rw
       - ./pacoloco.yaml:/etc/pacoloco.yaml:r
       - ./mirrorlist:/etc/pacman.d/reflector_mirrorlist:r
+      - ./chaotic-mirrorlist:/etc/pacman.d/chaotic_mirrorlist:r
     ports:
       - "7878:7878"
     labels:

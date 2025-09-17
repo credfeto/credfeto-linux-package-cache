@@ -21,9 +21,11 @@ sudo chown -R 1654:1654 /cache/proxy || die "Could not set proxy permissions"
 
 
 git pull
-
+[ -f /etc/pacman.d/chaotic-mirrorlist ] || die "No /etc/pacman.d/chaotic-mirrorlist"
 
 reflector --protocol https --country GB --fastest 20 --sort age --save "$BASEDIR/mirrorlist"
+
+cp /etc/pacman.d/chaotic-mirrorlist "$BASEDIR/chaotic-mirrorlist"
 
 #sudo chown -R 10001:65533 /cache/arch-pkgs || die "Could not set npm permissions"
 
