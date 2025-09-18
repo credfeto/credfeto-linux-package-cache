@@ -9,4 +9,7 @@ fi
 # Check to see if nginx is responding
 curl --fail http://localhost:7777/health?source=docker || exit 1
 
+# Check to see if flathub cache can be accessed
+curl --fail --insecure http://localhost:7777/ping?source=nginx-flathub.markridgwell.com\&should_bypass_cache=true || exit 1
+
 exit 0
