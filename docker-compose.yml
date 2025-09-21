@@ -26,7 +26,8 @@ services:
       - cache-aur-repos:/data/repos:rw
       - ./certs/aur.local.pfx:/usr/src/app/server.pfx:r
     ports:
-      - "7776:8080/tcp"
+      - "7776:8081/tcp"
+      - "7776:8081/udp"
     labels:
       - "autoheal=linuxpkg"
     networks:
