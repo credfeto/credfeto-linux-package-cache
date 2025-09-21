@@ -1,1 +1,5 @@
 openssl-custom.cnf
+aur.local.crt
+aur.local.key
+aur.local.pem
+aur.local.pfx
