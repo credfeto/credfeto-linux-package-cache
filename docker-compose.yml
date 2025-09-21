@@ -28,44 +28,9 @@ services:
       - "7776:8080/tcp"
     labels:
       - "autoheal=linuxpkg"
-    depends_on:
-      cache-aur-rpc:
-        condition: service_healthy
-      cache-aur-repos:
-        condition: service_started
     networks:
       backend:
 
-#  cache-aur-repos:
-#    image: rockstorm/gitweb:latest
-#    container_name: cache-aur-repos
-#    hostname: cache-aur-repos
-#    restart: always
-#    stop_grace_period: 5s
-#    stop_signal: SIGINT
-#    volumes:
-#      - cache-aur-repos:/srv/git:ro
-#    labels:
-#      - "autoheal=linuxpkg"
-#    networks:
-#      backend:
-#
-#  cache-aur:
-#    build: ./aur
-#    container_name: cache-aur
-#    restart: always
-#    stop_grace_period: 5s
-#    stop_signal: SIGINT
-#    ports:
-#      - "7776:7776/tcp"
-#    depends_on:
-#      cache-aur-rpc:
-#        condition: service_healthy
-#      cache-aur-repos:
-#        condition: service_started
-#    networks:
-#      backend:
-#      frontend:
 
   cache-proxy:
     image: docker-registry.markridgwell.com/credfeto/cache-proxy:latest
@@ -74,13 +39,6 @@ services:
     restart: always
     stop_grace_period: 500s
     stop_signal: SIGINT
-    #    environment:
-    #      - Proxy__UpstreamUrls__0=https://api.nuget.org
-    #      - Proxy__PublicUrl=https://api.nuget.local:5555
-    #      - Proxy__Packages=/data
-    #      - Proxy__JsonMaxAgeSeconds=30
-#    ports:
-#      - 8000:8080
     volumes:
       - cache-proxy:/data
       - ./proxy-appsettings.json:/usr/src/app/appsettings-local.json
