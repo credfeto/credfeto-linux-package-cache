@@ -24,6 +24,7 @@ services:
     volumes:
       - cache-aur-metadata:/data/metadata:rw
       - cache-aur-repos:/data/repos:rw
+      - ./certs/aur.local.pfx:/usr/src/app/server.pfx:r
     ports:
       - "7776:8080/tcp"
     labels:
