@@ -30,8 +30,14 @@ cp /etc/pacman.d/chaotic-mirrorlist "$BASEDIR/chaotic-mirrorlist"
 [ -f "$BASEDIR/certs/aur.local.pfx" ] || "$BASEDIR/certs/generate" aur.local
 [ -f "$BASEDIR/certs/aur.local.pfx" ] || die "No aur cert"
 
+[ -f "$BASEDIR/certs/proxy.local.pfx" ] || "$BASEDIR/certs/generate" proxy.local
+[ -f "$BASEDIR/certs/proxy.local.pfx" ] || die "No proxy cert"
+
+
 # Ensure Pfx is readable
 chmod 644 "$BASEDIR/certs/aur.local.pfx"
+chmod 644 "$BASEDIR/certs/proxy.local.pfx"
+
 #sudo chown -R 10001:65533 /cache/arch-pkgs || die "Could not set npm permissions"
 
 sudo docker volume create \

@@ -44,6 +44,7 @@ services:
     volumes:
       - cache-proxy:/data
       - ./proxy-appsettings.json:/usr/src/app/appsettings-local.json
+      - ./certs/proxy.local.pfx:/usr/src/app/server.pfx:r
     labels:
       - "autoheal=linuxpkg"
     networks:
