@@ -1,5 +1,14 @@
+dh.pem
 openssl-custom.cnf
 aur.local.crt
 aur.local.key
 aur.local.pem
 aur.local.pfx
+flathub.local.crt
+flathub.local.key
+flathub.local.pem
+flathub.local.pfx
+proxy.local.crt
+proxy.local.key
+proxy.local.pem
+proxy.local.pfx
