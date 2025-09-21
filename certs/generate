@@ -1,0 +1,67 @@
+#! /bin/sh
+
+die() {
+    echo
+    echo "$@"
+    exit 1
+}
+
+BASEDIR=$(dirname "$(readlink -f "$0")")
+
+[ -z "$BASEDIR" ] && die "BASEDIR Not defiled"  
+
+DOMAIN=$1
+[ -z "$DOMAIN" ] && die "DOMAIN Not defiled"
+
+ALGORITHM=rsa:2048
+
+SERVER_KEY="$BASEDIR/$DOMAIN.key"
+SERVER_CRT="$BASEDIR/$DOMAIN.crt"
+SERVER_PFX="$BASEDIR/$DOMAIN.pfx"
+SERVER_PEM="$BASEDIR/$DOMAIN.pem"
+
+{
+  echo "[req]"
+  echo "default_bits = 2048"
+  echo "prompt = no"
+  echo "default_md = sha256"
+  echo "x509_extensions = v3_req"
+  echo "distinguished_name = dn"
+  echo ""
+  echo "[dn]"
+  echo "C = GB"
+  echo "ST = London"
+  echo "L = London"
+  echo "O = Test"
+  echo "OU = Test Certificates"
+  echo "emailAddress = ssl-admin@$DOMAIN"
+  echo "CN = $DOMAIN"
+  echo ""
+  echo "[v3_req]"
+  echo "subjectAltName = @alt_names"
+  echo "[alt_names]"
+  echo "DNS.1 = $DOMAIN"
+  echo "DNS.2 = localhost"
+} > "$BASEDIR/openssl-custom.cnf"
+
+openssl req \
+    -newkey "$ALGORITHM" \
+    -x509 \
+    -nodes \
+    -keyout "$SERVER_KEY" \
+    -new \
+    -out "$SERVER_CRT" \
+    -config "$BASEDIR/openssl-custom.cnf" \
+    -sha256 \
+    -days 3650 || die "Failed to create server certificate"
+    
+openssl pkcs12 \
+    -export \
+    -out "$SERVER_PFX" \
+    -inkey "$SERVER_KEY" \
+    -in "$SERVER_CRT" || die "Failed to create $SERVER_PFX"
+    
+openssl pkcs12 \
+    -in "$SERVER_PFX" \
+    -out "$SERVER_PEM" \
+    -nodes  || die "Failed to create $SERVER_PEM"
