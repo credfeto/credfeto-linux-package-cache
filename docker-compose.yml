@@ -16,8 +16,8 @@ services:
 
   cache-aur:
     image: docker-registry.markridgwell.com/credfeto/aur-proxy:latest
-    container_name: cache-aur-rpc
-    hostname: cache-aur-rpc
+    container_name: cache-aur
+    hostname: cache-aur
     restart: always
     stop_grace_period: 5s
     stop_signal: SIGINT
