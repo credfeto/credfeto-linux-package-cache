@@ -13,7 +13,7 @@ echo "Script Dir: $BASEDIR"
 # [ -f "$BASEDIR/.env" ] || die ".env is required"
 
 echo "Updating systemd scripts"
-cat "systemd-unit/credfeto-package-cache.service" | sed "s:/home/markr/work/credfeto-dev-package-cache:$BASEDIR:g" | sudo tee /etc/systemd/system/credfeto-linux-cache.service
+cat "systemd-unit/credfeto-package-cache.service" | sed "s:/home/markr/work/credfeto-linux-package-cache:$BASEDIR:g" | sudo tee /etc/systemd/system/credfeto-linux-cache.service
 sudo cp "$BASEDIR/systemd-unit/credfeto-package-cache.timer" /etc/systemd/system/credfeto-linux-cache.timer
 
 . /etc/os-release
