@@ -1,0 +1,12 @@
+[Unit]
+Description=Update Linux Package Cache
+After=network.target
+
+[Service]
+User=markr
+Type=oneshot
+IOSchedulingClass=idle
+CPUSchedulingPolicy=idle
+WorkingDirectory=/home/markr/work/credfeto-linx-package-cache
+ExecStart=/bin/flock -n /tmp/devpkg.lock -c /home/markr/work/credfeto-linux-package-cache/update
+

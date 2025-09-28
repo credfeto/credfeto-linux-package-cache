@@ -1,0 +1,39 @@
+#! /bin/sh
+
+PROG=$0
+die() {
+    echo
+    echo "$@"
+    exit 1
+}
+
+BASEDIR="$(dirname "$(readlink -f "$0")")"
+echo "Script Dir: $BASEDIR"
+
+# [ -f "$BASEDIR/.env" ] || die ".env is required"
+
+echo "Updating systemd scripts"
+cat "systemd-unit/credfeto-package-cache.service" | sed "s:/home/markr/work/credfeto-dev-package-cache:$BASEDIR:g" | sudo tee /etc/systemd/system/credfeto-linux-cache.service
+sudo cp "$BASEDIR/systemd-unit/credfeto-package-cache.timer" /etc/systemd/system/credfeto-linux-cache.timer
+
+. /etc/os-release
+if [ "$ID" = "arch" ]; then
+  "$BASEDIR/trust-certs.arch"
+elif [ "$ID" = "ubuntu" ]; then
+  "$BASEDIR/trust-certs.ubuntu"
+else
+  echo "Unsupported OS - you need to trust the local certs manually"
+fi
+
+echo "systemd reload"
+sudo systemctl daemon-reload
+
+echo "Enable credfeto-package-cache.timer"
+sudo systemctl enable credfeto-linux-cache.timer
+
+echo "Start credfeto-package-cache.timer"
+sudo systemctl start credfeto-linux-cache.timer
+
+"$BASEDIR/update"
+
+echo "Done"
