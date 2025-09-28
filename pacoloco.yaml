@@ -25,29 +25,29 @@ repos:
 #      - https://lon.mirror.rackspace.com/archlinux
 
   chaotic-aur:
-    mirrorlist: /etc/pacman.d/chaotic_mirrorlist
-#    urls:
-#      - https://cdn-mirror.chaotic.cx/chaotic-aur
-#      - https://geo-mirror.chaotic.cx/chaotic-aur
-#      - https://br-mirror.chaotic.cx/chaotic-aur
-#      - https://bg-mirror.chaotic.cx/chaotic-aur
-#      - https://ca-mirror.chaotic.cx/chaotic-aur
-#      - https://cl-mirror.chaotic.cx/chaotic-aur
-#      - https://de-2-mirror.chaotic.cx/chaotic-aur
-#      - https://de-3-mirror.chaotic.cx/chaotic-aur
-#      - https://de-4-mirror.chaotic.cx/chaotic-aur
-#      - https://fr-mirror.chaotic.cx/chaotic-aur
-#      - https://gr-mirror.chaotic.cx/chaotic-aur
-#      - https://in-mirror.chaotic.cx/chaotic-aur
-#      - https://in-2-mirror.chaotic.cx/chaotic-aur
-#      - https://in-3-mirror.chaotic.cx/chaotic-aur
-#      - https://in-4-mirror.chaotic.cx/chaotic-aur
-#      - https://kr-mirror.chaotic.cx/chaotic-aur
-#      - https://es-mirror.chaotic.cx/chaotic-aur
-#      - https://es-2-mirror.chaotic.cx/chaotic-aur
-#      - https://us-mi-mirror.chaotic.cx/chaotic-aur
-#      - https://us-tx-mirror.chaotic.cx/chaotic-aur
-#      - https://us-ut-mirror.chaotic.cx/repos/chaotic-aur
+#    mirrorlist: /etc/pacman.d/chaotic_mirrorlist
+    urls:
+      - https://cdn-mirror.chaotic.cx/chaotic-aur
+      - https://geo-mirror.chaotic.cx/chaotic-aur
+      - https://br-mirror.chaotic.cx/chaotic-aur
+      - https://bg-mirror.chaotic.cx/chaotic-aur
+      - https://ca-mirror.chaotic.cx/chaotic-aur
+      - https://cl-mirror.chaotic.cx/chaotic-aur
+      - https://de-2-mirror.chaotic.cx/chaotic-aur
+      - https://de-3-mirror.chaotic.cx/chaotic-aur
+      - https://de-4-mirror.chaotic.cx/chaotic-aur
+      - https://fr-mirror.chaotic.cx/chaotic-aur
+      - https://gr-mirror.chaotic.cx/chaotic-aur
+      - https://in-mirror.chaotic.cx/chaotic-aur
+      - https://in-2-mirror.chaotic.cx/chaotic-aur
+      - https://in-3-mirror.chaotic.cx/chaotic-aur
+      - https://in-4-mirror.chaotic.cx/chaotic-aur
+      - https://kr-mirror.chaotic.cx/chaotic-aur
+      - https://es-mirror.chaotic.cx/chaotic-aur
+      - https://es-2-mirror.chaotic.cx/chaotic-aur
+      - https://us-mi-mirror.chaotic.cx/chaotic-aur
+      - https://us-tx-mirror.chaotic.cx/chaotic-aur
+      - https://us-ut-mirror.chaotic.cx/repos/chaotic-aur
 
 ## Local/3rd party repos can be added following the below example:
 #  quarry:
