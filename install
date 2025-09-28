@@ -13,8 +13,8 @@ echo "Script Dir: $BASEDIR"
 # [ -f "$BASEDIR/.env" ] || die ".env is required"
 
 echo "Updating systemd scripts"
-cat "systemd-unit/credfeto-package-cache.service" | sed "s:/home/markr/work/credfeto-linux-package-cache:$BASEDIR:g" | sudo tee /etc/systemd/system/credfeto-linux-cache.service
-sudo cp "$BASEDIR/systemd-unit/credfeto-package-cache.timer" /etc/systemd/system/credfeto-linux-cache.timer
+cat "systemd-unit/credfeto-linux-package-cache.service" | sed "s:/home/markr/work/credfeto-linux-package-cache:$BASEDIR:g" | sudo tee /etc/systemd/system/credfeto-linux-package-cache.service
+sudo cp "$BASEDIR/systemd-unit/credfeto-linux-package-cache.timer" /etc/systemd/system/credfeto-linux-package-cache.timer
 
 . /etc/os-release
 if [ "$ID" = "arch" ]; then
@@ -28,11 +28,11 @@ fi
 echo "systemd reload"
 sudo systemctl daemon-reload
 
-echo "Enable credfeto-package-cache.timer"
-sudo systemctl enable credfeto-linux-cache.timer
+echo "Enable credfeto-linux-package-cache.timer"
+sudo systemctl enable credfeto-linux-package-cache.timer
 
-echo "Start credfeto-package-cache.timer"
-sudo systemctl start credfeto-linux-cache.timer
+echo "Start credfeto-linux-package-cache.timer"
+sudo systemctl start credfeto-linux-package-cache.timer
 
 "$BASEDIR/update"
 
