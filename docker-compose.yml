@@ -1,4 +1,39 @@
 services:
+  cache-watchtower:
+    image: containrrr/watchtower
+    container_name: cache-watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+    environment:
+      WATCHTOWER_NOTIFICATIONS_HOSTNAME: linux-cache
+      WATCHTOWER_POLL_INTERVAL: 3600
+
+  cache-dozzle:
+    image: amir20/dozzle:latest
+    container_name: cache-dozzle
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8080:8080/tcp"
+    environment:
+      DOZZLE_HOSTNAME: linux-cache
+      # Uncomment to enable container actions (stop, start, restart). See https://dozzle.dev/guide/actions
+      # - DOZZLE_ENABLE_ACTIONS=true
+      #
+      # Uncomment to allow access to container shells. See https://dozzle.dev/guide/shell
+      # - DOZZLE_ENABLE_SHELL=true
+      #
+      # Uncomment to enable authentication. See https://dozzle.dev/guide/authentication
+      # - DOZZLE_AUTH_PROVIDER=simple
+    restart: always
+    healthcheck:
+      test: ["CMD", "/dozzle", "healthcheck"]
+      interval: 3s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
   cache-restarter:
     image: docker-registry.markridgwell.com/credfeto/cache-restarter:latest
     container_name: cache-restarter
