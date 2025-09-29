@@ -8,6 +8,8 @@ die() {
 
 BASEDIR="$(dirname "$(readlink -f "$0")")"
 
+git pull
+
 [ -d /cache/ ] || sudo mkdir /cache
 [ -d /cache/arch-pkgs ] || sudo mkdir /cache/arch-pkgs
 [ -d /cache/flathub-pkgs ] || sudo mkdir /cache/flathub-pkgs
