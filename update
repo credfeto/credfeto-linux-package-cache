@@ -22,8 +22,6 @@ sudo chown -R 1654:1654 /cache/aur/metadata || die "Could not set aur/metadata p
 sudo chown -R 1654:1654 /cache/aur/repos || die "Could not set aur/repos permissions"
 sudo chown -R 1654:1654 /cache/proxy || die "Could not set proxy permissions"
 
-
-git pull
 [ -f /etc/pacman.d/chaotic-mirrorlist ] || die "No /etc/pacman.d/chaotic-mirrorlist"
 
 reflector --protocol https --country GB --fastest 20 --sort age --save "$BASEDIR/mirrorlist"
