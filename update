@@ -24,9 +24,9 @@ sudo chown -R 1654:1654 /cache/proxy || die "Could not set proxy permissions"
 
 [ -f /etc/pacman.d/chaotic-mirrorlist ] || die "No /etc/pacman.d/chaotic-mirrorlist"
 
-reflector --protocol https --country GB --fastest 20 --sort age --save "$BASEDIR/mirrorlist"
+rate-mirrors --allow-root --protocol=https --save "$BASEDIR/mirrorlist" arch
+rate-mirrors --allow-root --protocol=https --save "$BASEDIR/chaotic-mirrorlist" chaotic-aur
 
-cp /etc/pacman.d/chaotic-mirrorlist "$BASEDIR/chaotic-mirrorlist"
 
 if [ ! -f "$BASEDIR/certs/dh.pem" ]; then
   echo "Generating PFS"
