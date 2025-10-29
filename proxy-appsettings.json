@@ -16,7 +16,7 @@
         ]
       },
       {
-        "Source": "dl.flathub.local",
+        "Source": "flathub.markridgwell.com",
         "Target": "https://dl.flathub.org",
         "Settings": [
           {
