@@ -8,6 +8,10 @@
           {
             "Match": "\\.filez$",
             "LifeTimeSeconds": 63115200
+          },
+          {
+            "Match": "\\.local$",
+            "LifeTimeSeconds": 63115200
           }
         ]
       },
@@ -17,6 +21,10 @@
         "Settings": [
           {
             "Match": "\\.filez$",
+            "LifeTimeSeconds": 63115200
+          },
+          {
+            "Match": "\\.local$",
             "LifeTimeSeconds": 63115200
           }
         ]
