@@ -26,6 +26,10 @@
           {
             "Match": "\\.local$",
             "LifeTimeSeconds": 63115200
+          },
+          {
+            "Match": "^/repo/deltas/",
+            "LifeTimeSeconds": 63115200
           }
         ]
       }
