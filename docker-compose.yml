@@ -50,7 +50,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
   cache-aur:
-    image: docker-registry.markridgwell.com/credfeto/aur-proxy:latest
+    image: ${AUR_IMAGE:-credfeto/aur-proxy:stable}
     container_name: cache-aur
     hostname: cache-aur
     restart: always
