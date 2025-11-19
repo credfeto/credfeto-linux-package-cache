@@ -68,7 +68,6 @@ services:
     networks:
       backend:
 
-
   cache-proxy:
     image: docker-registry.markridgwell.com/credfeto/cache-proxy:latest
     container_name: cache-proxy
