@@ -8,6 +8,9 @@ die() {
 
 BASEDIR="$(dirname "$(readlink -f "$0")")"
 
+AUR_USER=root
+PROXY_USER=1654
+
 git pull
 
 [ -d /cache/ ] || sudo mkdir /cache
@@ -18,9 +21,11 @@ git pull
 [ -d /cache/aur/metadata ] || sudo mkdir /cache/aur/metadata
 [ -d /cache/aur/repos ] || sudo mkdir /cache/aur/repos
 
-sudo chown -R 1654:1654 /cache/aur/metadata || die "Could not set aur/metadata permissions"
-sudo chown -R 1654:1654 /cache/aur/repos || die "Could not set aur/repos permissions"
-sudo chown -R 1654:1654 /cache/proxy || die "Could not set proxy permissions"
+
+
+sudo chown -R "$AUR_USER:$AUR_USER" /cache/aur/metadata || die "Could not set aur/metadata permissions"
+sudo chown -R "$AUR_USER:$AUR_USER" /cache/aur/repos || die "Could not set aur/repos permissions"
+sudo chown -R "$PROXY_USER:$PROXY_USER" /cache/proxy || die "Could not set proxy permissions"
 
 [ -f /etc/pacman.d/chaotic-mirrorlist ] || die "No /etc/pacman.d/chaotic-mirrorlist"
 
