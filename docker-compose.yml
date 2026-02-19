@@ -88,6 +88,31 @@ services:
 #      backend:
       frontend:
 
+  #  cache-pacman:
+  #    build: ./pacman
+  #    container_name: cache-pacman
+  #    restart: always
+  #    stop_grace_period: 5s
+  #    stop_signal: SIGINT
+  #    volumes:
+  #      - ./certs:/etc/nginx/ssl:r
+  #      - cache-pacman:/var/cache/nginx/proxy
+  #      - ./certs/dh.pem:/etc/nginx/ssl/dh.pem:r
+  #      - ./certs/pacman.local.key:/etc/nginx/ssl/pacman.local.key:r
+  #      - ./certs/pacman.local.pem:/etc/nginx/ssl/pacman.local.pem:r
+  #    ports:
+  #      - "7777:7777/tcp"
+  #      - "7777:7777/udp"
+  #    labels:
+  #      - "autoheal=linuxpkg"
+  #    depends_on:
+  #      cache-proxy:
+  #        condition: service_healthy
+  #    networks:
+  #      backend:
+  #      frontend:
+
+
 #  cache-flathub:
 #    build: ./flathub
 #    container_name: cache-flathub

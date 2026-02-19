@@ -98,7 +98,7 @@ http {
         default "no-cache";
     }
 
-    proxy_cache_path /var/cache/nginx
+    proxy_cache_path /var/cache/nginx/proxy/pacman_cache
             keys_zone=proxy_cache:512m
             levels=1:2
             max_size=20g
@@ -254,6 +254,12 @@ cat << EOF >> "$OUTPUT"
             add_header X-Cache-Status \$upstream_cache_status;
         }
     }
+
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
+    ssl_dhparam ssl/dh.pem;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
+    add_header X-Frame-Options SAMEORIGIN;
 }
 EOF
 
