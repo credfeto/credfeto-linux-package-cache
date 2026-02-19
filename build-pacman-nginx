@@ -197,7 +197,7 @@ cat << EOF >> "$OUTPUT"
     # Default
     server {
         listen 8888;
-        listen 8888 ssl;
+        listen 8889 ssl;
         http2                      on;
         server_name                pacman.local;
         proxy_cache  proxy_cache;

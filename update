@@ -27,12 +27,6 @@ sudo chown -R "$AUR_USER:$AUR_USER" /cache/aur/metadata || die "Could not set au
 sudo chown -R "$AUR_USER:$AUR_USER" /cache/aur/repos || die "Could not set aur/repos permissions"
 sudo chown -R "$PROXY_USER:$PROXY_USER" /cache/proxy || die "Could not set proxy permissions"
 
-[ -f /etc/pacman.d/chaotic-mirrorlist ] || die "No /etc/pacman.d/chaotic-mirrorlist"
-
-rate-mirrors --allow-root --protocol=https --save "$BASEDIR/mirrorlist" arch
-rate-mirrors --allow-root --protocol=https --save "$BASEDIR/chaotic-mirrorlist" chaotic-aur
-
-
 if [ ! -f "$BASEDIR/certs/dh.pem" ]; then
   echo "Generating PFS"
   openssl dhparam -out "$BASEDIR/certs/dh.pem" 4096
