@@ -16,6 +16,7 @@ git pull
 [ -d /cache/ ] || sudo mkdir /cache
 [ -d /cache/arch-pkgs ] || sudo mkdir /cache/arch-pkgs
 [ -d /cache/flathub-pkgs ] || sudo mkdir /cache/flathub-pkgs
+[ -d /cache/pacman-pkgs ] || sudo mkdir /cache/pacman-pkgs
 [ -d /cache/proxy ] || sudo mkdir /cache/proxy
 [ -d /cache/aur ] || sudo mkdir /cache/aur
 [ -d /cache/aur/metadata ] || sudo mkdir /cache/aur/metadata
@@ -81,6 +82,12 @@ sudo docker volume create \
   --opt o=bind \
   --opt device=/cache/flathub-pkgs \
   cache-flathub
+
+sudo docker volume create \
+  --opt type=none \
+  --opt o=bind \
+  --opt device=/cache/pacman-pkgs \
+  cache-pacman
 
 sudo docker volume create \
   --opt type=none \
