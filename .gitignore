@@ -2,3 +2,4 @@
 .env
 mirrorlist
 chaotic-mirrorlist
+nginx.temp.conf

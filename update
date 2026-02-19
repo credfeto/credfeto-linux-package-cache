@@ -48,12 +48,19 @@ fi
 [ -f "$BASEDIR/certs/flathub.local.pfx" ] || "$BASEDIR/certs/generate" flathub.local
 [ -f "$BASEDIR/certs/flathub.local.pfx" ] || die "No flathub cert"
 
+[ -f "$BASEDIR/certs/pacman.local.pfx" ] || "$BASEDIR/certs/generate" pacman.local
+[ -f "$BASEDIR/certs/pacman.local.pfx" ] || die "No pacman cert"
+
 
 # Ensure Pfx is readable
 chmod 644 "$BASEDIR/certs/aur.local.pfx"
 chmod 644 "$BASEDIR/certs/proxy.local.pfx"
 chmod 644 "$BASEDIR/certs/flathub.local.key"
 chmod 644 "$BASEDIR/certs/flathub.local.pem"
+chmod 644 "$BASEDIR/certs/pacman.local.key"
+chmod 644 "$BASEDIR/certs/pacman.local.pem"
+
+"$BASEDIR/build-pacman-nginx"
 
 #sudo chown -R 10001:65533 /cache/arch-pkgs || die "Could not set npm permissions"
 

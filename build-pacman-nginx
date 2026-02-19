@@ -1,0 +1,257 @@
+#! /bin/bash
+
+die() {
+    echo
+    echo "$@"
+    exit 1
+}
+
+
+is_arch_url()
+{
+  url=$1
+  regex_pattern='^Server = https://([^/]+?)/archlinux/\$repo/os/\$arch$'
+
+  if [[ "$url" =~ $regex_pattern ]]; then
+      domain=${BASH_REMATCH[1]}
+      echo "$domain"
+  fi
+}
+
+is_chaotic_aur_url()
+{
+  url=$1
+  regex_pattern='^Server = https://([^/]+?)/\$repo/\$arch$'
+
+  if [[ "$url" =~ $regex_pattern ]]; then
+      domain=${BASH_REMATCH[1]}
+      echo "$domain"
+  fi
+}
+
+BASEDIR="$(dirname "$(readlink -f "$0")")"
+OUTPUT="$BASEDIR/nginx.test.conf"
+
+ARCH_BASE_PORT=8000
+CHAOTIC_AUR_BASE_PORT=9000
+
+# Assume Rate mirrors is defined
+sudo pacman -S --needed --noconfirm rate-mirrors
+
+[ -f "$BASEDIR/mirrorlists/arch" ] || rate-mirrors --allow-root --protocol=https  --save "$BASEDIR/mirrorlists/arch" arch || die "Could not load arch mirrors"
+[ -f "$BASEDIR/mirrorlists/chaotic" ] || rate-mirrors --allow-root --protocol=https --save "$BASEDIR/mirrorlists/chaotic" chaotic-aur || die "Could not load chaotic mirrors"
+
+echo "Loading: Arch Mirrors"
+declare -a ARCH_MIRRORS=()
+while read -r line
+do
+  if [ -n "$line" ]; then
+    match=$(is_arch_url "$line")
+    if [ -n "$match" ]; then
+      echo " * $match"
+      ARCH_MIRRORS+=("$match")
+    fi
+
+  fi
+done < "$BASEDIR/mirrorlists/arch"
+
+echo "Found: ${#ARCH_MIRRORS[@]}"
+
+echo "Loading: Chaotic AUR Mirrors"
+
+declare -a CHAOTIC_AUR_MIRRORS=()
+while read -r line
+do
+  if [ -n "$line" ]; then
+    match=$(is_chaotic_aur_url "$line")
+    if [ -n "$match" ]; then
+      echo " * $match"
+      CHAOTIC_AUR_MIRRORS+=("$match")
+    fi
+  fi
+done < "$BASEDIR/mirrorlists/chaotic"
+
+
+echo ""
+echo "Summary:"
+echo " * Arch Mirrors: $ARCH_MIRRORS"
+echo " * Chaotic AUR Mirrors: CHAOTIC_AUR_MIRRORS"
+[ "${#ARCH_MIRRORS[@]}" = "0" ] && die "Mo Arch Mirrors found"
+[ "${#CHAOTIC_AUR_MIRRORS[@]}" = "0" ] && die "Mo Arch Mirrors found"
+
+cat << EOF > "$OUTPUT"
+worker_processes  1;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    types_hash_max_size 2048;
+
+    log_format fmt_syslog '\$time_local \$status \$http_x_forwarded_for - \$remote_addr \$http_host "\$request" \$body_bytes_sent \$request_time "\$http_user_agent" \$remote_user';
+    access_log syslog:server=unix:/dev/log fmt_syslog;
+
+     map \$status \$cache_header {
+        200     "public";
+        302     "public";
+        default "no-cache";
+    }
+
+    proxy_cache_path /var/cache/nginx
+            keys_zone=proxy_cache:512m
+            levels=1:2
+            max_size=20g
+            inactive=60d
+            use_temp_path=off;
+
+    sendfile        on;
+
+    keepalive_timeout  65;
+    server_tokens off;
+
+    gzip  on;
+
+    resolver 1.1.1.2 1.0.0.2 valid=30s;
+
+EOF
+
+echo "    upstream archlinux-mirrors {" >> "$OUTPUT"
+echo "        keepalive 64;" >> "$OUTPUT"
+for ((i = 0; i < ${#ARCH_MIRRORS[@]}; i++)); do
+    PORT=$((ARCH_BASE_PORT + i))
+    MIRROR=${ARCH_MIRRORS[i]}
+    echo "        # $MIRROR"
+    echo "        server 127.0.0.1:$PORT;" >> "$OUTPUT"
+done
+echo "    }" >> "$OUTPUT"
+echo ""
+
+echo "    upstream chaotic-aur-mirrors {" >> "$OUTPUT"
+echo "        keepalive 64;" >> "$OUTPUT"
+for ((i = 0; i < ${#CHAOTIC_AUR_MIRRORS[@]}; i++)); do
+    PORT=$((CHAOTIC_AUR_BASE_PORT + i))
+    MIRROR=${CHAOTIC_AUR_MIRRORS[i]}
+    echo "        # $MIRROR"
+    echo "        server 127.0.0.1:$PORT;" >> "$OUTPUT"
+done
+echo "    }" >> "$OUTPUT"
+echo ""
+
+
+for ((i = 0; i < ${#ARCH_MIRRORS[@]}; i++)); do
+    PORT=$((ARCH_BASE_PORT + i))
+    MIRROR=${ARCH_MIRRORS[i]}
+
+    echo "Arch Server $i: $MIRROR"
+
+    cat << EOF >> "$OUTPUT"
+    server {
+
+        listen 127.0.0.1:$PORT;
+
+        location / {
+            rewrite ^/repo/(.*)$ /\$1  break;
+
+            proxy_pass https://$MIRROR;
+            proxy_ssl_server_name on;
+            proxy_set_header Host $MIRROR;
+            proxy_http_version  1.1;
+            proxy_set_header    Connection "";
+        }
+    }
+
+EOF
+done
+
+for ((i = 0; i < ${#CHAOTIC_AUR_MIRRORS[@]}; i++)); do
+    PORT=$((CHAOTIC_AUR_BASE_PORT + i))
+    MIRROR=${CHAOTIC_AUR_MIRRORS[i]}
+
+    echo "Chaotic AUR Server $i: $MIRROR"
+
+    cat << EOF >> "$OUTPUT"
+    server {
+
+        listen 127.0.0.1:$PORT;
+
+        location / {
+            rewrite ^/repo/(.*)$ /\$1  break;
+
+            proxy_pass https://$MIRROR;
+            proxy_ssl_server_name on;
+            proxy_set_header Host $MIRROR;
+            proxy_http_version  1.1;
+            proxy_set_header    Connection "";
+            rewrite ^ /demo$uri break;
+        }
+    }
+
+EOF
+done
+
+
+
+cat << EOF >> "$OUTPUT"
+
+    # Default
+    server {
+        listen       80 default_server;
+        server_name  "_";
+        proxy_cache  proxy_cache;
+
+        # HA Proxy
+        location /health {
+                access_log on;
+                add_header 'Content-Type' 'application/json';
+                add_header 'X-Direct' 'True';
+                return 200 '{"status":"UP"}';
+        }
+
+
+
+        location /repo/archlinux/ {
+            proxy_pass http://archlinux-mirrors;
+            proxy_http_version  1.1;
+            proxy_set_header    Connection "";
+
+            proxy_ssl_server_name on;
+            proxy_buffers       16 256k;
+            proxy_buffer_size   256k;
+            proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
+            proxy_cache_valid   200 302  24h;
+            proxy_cache_valid   404      30s;
+            proxy_cache_valid   301      1h;
+            proxy_cache_bypass  \$arg_should_bypass_cache;
+            proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504 http_429;
+            proxy_cache_lock    on;
+            add_header Cache-Control \$cache_header always;
+            add_header X-Cache-Status \$upstream_cache_status;
+        }
+
+        location /repo/chaotic-aur/ {
+            proxy_pass http://chaotic-aur-mirrors;
+            proxy_http_version  1.1;
+            proxy_set_header    Connection "";
+
+            proxy_ssl_server_name on;
+            proxy_buffers       16 256k;
+            proxy_buffer_size   256k;
+            proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
+            proxy_cache_valid   200 302  24h;
+            proxy_cache_valid   404      30s;
+            proxy_cache_valid   301      1h;
+            proxy_cache_bypass  \$arg_should_bypass_cache;
+            proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504 http_429;
+            proxy_cache_lock    on;
+            add_header Cache-Control \$cache_header always;
+            add_header X-Cache-Status \$upstream_cache_status;
+        }
+    }
+}
+EOF
+
+
+sudo nginx -t -c "$OUTPUT" || die "Invalid nginx configuration generated"
+
+sudo cp "$OUTPUT" "$BASEDIR/pacman/nginx.conf"
