@@ -196,9 +196,15 @@ cat << EOF >> "$OUTPUT"
 
     # Default
     server {
-        listen       80 default_server;
-        server_name  "_";
+        listen 8888;
+        listen 8888 ssl;
+        http2                      on;
+        server_name                pacman.local;
         proxy_cache  proxy_cache;
+
+        ssl_protocols              TLSv1.3;
+        ssl_certificate            ssl/flathub.local.pem;
+        ssl_certificate_key        ssl/flathub.local.key;
 
         # HA Proxy
         location /health {
