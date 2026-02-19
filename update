@@ -95,7 +95,7 @@ sudo docker volume create \
   --opt device=/cache/arch-pkgs \
   cache-pacoloco
 
-sudo docker compose pull || die "Could not pull images"
+#sudo docker compose pull || die "Could not pull images"
 sudo docker compose build || die "Could not build images"
 
 sudo docker compose up -d --remove-orphans || die "Could not start containers"
