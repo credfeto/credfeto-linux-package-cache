@@ -203,8 +203,8 @@ cat << EOF >> "$OUTPUT"
         proxy_cache  proxy_cache;
 
         ssl_protocols              TLSv1.3;
-        ssl_certificate            ssl/flathub.local.pem;
-        ssl_certificate_key        ssl/flathub.local.key;
+        ssl_certificate            ssl/pacman.local.pem;
+        ssl_certificate_key        ssl/pacman.local.key;
 
         # HA Proxy
         location /health {
