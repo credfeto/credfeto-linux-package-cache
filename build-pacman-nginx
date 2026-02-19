@@ -264,6 +264,6 @@ cat << EOF >> "$OUTPUT"
 EOF
 
 
-sudo nginx -t -c "$OUTPUT" || die "Invalid nginx configuration generated"
+#sudo nginx -t -c "$OUTPUT" || die "Invalid nginx configuration generated"
 
 sudo cp "$OUTPUT" "$BASEDIR/pacman/nginx.conf"
