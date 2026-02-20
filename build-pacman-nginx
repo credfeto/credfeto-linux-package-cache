@@ -112,7 +112,7 @@ http {
 
     gzip  on;
 
-    resolver 1.1.1.2 1.0.0.2 valid=30s;
+    resolver 1.1.1.2 1.0.0.2 valid=30s ipv6=off;
 
 EOF
 

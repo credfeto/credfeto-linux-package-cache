@@ -167,9 +167,11 @@ services:
 networks:
   backend:
     driver: bridge
+    enable_ipv6: false
 
   frontend:
     driver: bridge
+    enable_ipv6: false
 
 volumes:
   cache-aur-metadata:
