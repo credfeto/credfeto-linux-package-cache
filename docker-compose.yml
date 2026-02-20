@@ -8,6 +8,8 @@ services:
     environment:
       WATCHTOWER_NOTIFICATIONS_HOSTNAME: linux-cache
       WATCHTOWER_POLL_INTERVAL: 3600
+    networks:
+      - cache
 
   cache-dozzle:
     image: amir20/dozzle:latest
@@ -33,6 +35,8 @@ services:
       timeout: 30s
       retries: 5
       start_period: 30s
+    networks:
+      - cache
 
   cache-restarter:
     image: docker-registry.markridgwell.com/credfeto/cache-restarter:latest
@@ -65,6 +69,8 @@ services:
       - "7776:8081/udp"
     labels:
       - "autoheal=linuxpkg"
+    networks:
+      - cache
 
   cache-proxy:
     image: docker-registry.markridgwell.com/credfeto/cache-proxy:latest
@@ -85,6 +91,8 @@ services:
     depends_on:
       cache-pacman:
         condition: service_healthy
+    networks:
+      - cache
 
   cache-pacman:
       build: ./pacman
@@ -103,8 +111,8 @@ services:
         - "8889:8889/udp"
       labels:
         - "autoheal=linuxpkg"
-      sysctls:
-        net.ipv6.conf.all.disable_ipv6: 1
+      networks:
+        - cache
 
   cache-flathub:
     build: ./flathub
@@ -126,8 +134,8 @@ services:
     depends_on:
       cache-proxy:
         condition: service_healthy
-    sysctls:
-      net.ipv6.conf.all.disable_ipv6: 1
+    networks:
+      - cache
 
   cache-pacoloco:
     #   to pull the image from github's registry:
@@ -149,11 +157,19 @@ services:
       - "7878:7878"
     labels:
       - "autoheal=linuxpkg"
+    networks:
+      - cache
 #   if a specific user id is provided, you have to make sure
 #   the mounted directories have the same user id owner on host
 #   user: 1000:1000
 #   or replace it for self-building with:
 #    build: https://github.com/anatol/pacoloco.git
+networks:
+  cache:
+    driver: bridge
+    enable_ipv6: true
+
+
 
 volumes:
   cache-aur-metadata:
