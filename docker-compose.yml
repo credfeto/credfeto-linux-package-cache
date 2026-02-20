@@ -149,8 +149,6 @@ services:
       - "7878:7878"
     labels:
       - "autoheal=linuxpkg"
-    networks:
-      frontend:
 #   if a specific user id is provided, you have to make sure
 #   the mounted directories have the same user id owner on host
 #   user: 1000:1000
