@@ -87,6 +87,9 @@ services:
     networks:
 #      backend:
       frontend:
+    depends_on:
+      cache-pacman:
+        condition: service_healthy
 
   cache-pacman:
       build: ./pacman
@@ -95,7 +98,6 @@ services:
       stop_grace_period: 5s
       stop_signal: SIGINT
       volumes:
-  #      - ./certs:/etc/nginx/ssl:r
         - cache-pacman:/var/cache/nginx/proxy
         - ./certs/dh.pem:/etc/nginx/ssl/dh.pem:r
         - ./certs/pacman.local.key:/etc/nginx/ssl/pacman.local.key:r
@@ -107,32 +109,32 @@ services:
         - "autoheal=linuxpkg"
       networks:
         backend:
-        frontend:
+          aliases:
+            - pacman.local
 
-
-#  cache-flathub:
-#    build: ./flathub
-#    container_name: cache-flathub
-#    restart: always
-#    stop_grace_period: 5s
-#    stop_signal: SIGINT
-#    volumes:
-#      - ./certs:/etc/nginx/ssl:r
-#      - cache-flathub:/var/cache/nginx/proxy
-#      - ./certs/dh.pem:/etc/nginx/ssl/dh.pem:r
-#      - ./certs/flathub.local.key:/etc/nginx/ssl/flathub.local.key:r
-#      - ./certs/flathub.local.pem:/etc/nginx/ssl/flathub.local.pem:r
-#    ports:
-#      - "7777:7777/tcp"
-#      - "7777:7777/udp"
-#    labels:
-#      - "autoheal=linuxpkg"
-#    depends_on:
-#      cache-proxy:
-#        condition: service_healthy
-#    networks:
-#      backend:
-#      frontend:
+  cache-flathub:
+    build: ./flathub
+    container_name: cache-flathub
+    restart: always
+    stop_grace_period: 5s
+    stop_signal: SIGINT
+    volumes:
+      - cache-flathub:/var/cache/nginx/proxy
+      - ./certs/dh.pem:/etc/nginx/ssl/dh.pem:r
+      - ./certs/flathub.local.key:/etc/nginx/ssl/flathub.local.key:r
+      - ./certs/flathub.local.pem:/etc/nginx/ssl/flathub.local.pem:r
+    ports:
+      - "8777:7777/tcp"
+      - "8777:7777/udp"
+    labels:
+      - "autoheal=linuxpkg"
+    depends_on:
+      cache-proxy:
+        condition: service_healthy
+    networks:
+      backend:
+        aliases:
+          - flathub.local
 
   cache-pacoloco:
     #   to pull the image from github's registry:

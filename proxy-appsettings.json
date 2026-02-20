@@ -3,7 +3,8 @@
     "Sites": [
       {
         "Source": "localhost",
-        "Target": "https://dl.flathub.org",
+        "Target": "https://flathub.local:8777",
+        "Targets": "https://dl.flathub.org",
         "Settings": [
           {
             "Match": "\\.filez$",
@@ -17,7 +18,8 @@
       },
       {
         "Source": "flathub.markridgwell.com",
-        "Target": "https://dl.flathub.org",
+        "Target": "https://flathub.local:8777",
+        "Targets": "https://dl.flathub.org",
         "Settings": [
           {
             "Match": "\\.filez$",
@@ -29,6 +31,20 @@
           },
           {
             "Match": "^/repo/deltas/",
+            "LifeTimeSeconds": 63115200
+          }
+        ]
+      },
+      {
+        "Source": "pacman.markridgwell.com",
+        "Target": "https://pacman.local:8889",
+        "Settings": [
+          {
+            "Match": "\\.pkg\\.tar\\.zst\\.sig$",
+            "LifeTimeSeconds": 63115200
+          },
+          {
+            "Match": "\\.pkg\\.tar\\.zst$",
             "LifeTimeSeconds": 63115200
           }
         ]
