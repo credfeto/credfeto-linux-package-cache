@@ -17,7 +17,8 @@
       },
       {
         "Source": "flathub.markridgwell.com",
-        "Target": "https://dl.flathub.org",
+        "Target": "https://192.168.150.200:8776",
+        "TargetX": "https://dl.flathub.org",
         "Settings": [
           {
             "Match": "\\.filez$",
@@ -35,7 +36,8 @@
       },
       {
         "Source": "pacman.markridgwell.com",
-        "Target": "http://pacman.local:8888",
+        "Target": "http://192.168.150.200:8888",
+        "TargetX": "https://pacman.local:8888",
         "Settings": [
           {
             "Match": "\\.pkg\\.tar\\.zst\\.sig$",
