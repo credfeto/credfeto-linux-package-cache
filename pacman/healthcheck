@@ -9,7 +9,4 @@ fi
 # Check to see if nginx is responding
 curl --fail http://localhost:8888/health?source=docker || exit 1
 
-## Check to see if pacman cache can be accessed
-#curl --fail --insecure http://localhost:8888/ping?source=nginx-pacman.local\&should_bypass_cache=true || exit 1
-
 exit 0
