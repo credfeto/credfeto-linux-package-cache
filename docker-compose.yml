@@ -107,6 +107,8 @@ services:
         - "8889:8889/udp"
       labels:
         - "autoheal=linuxpkg"
+      sysctls:
+        net.ipv6.conf.all.disable_ipv6: 1
       networks:
         backend:
           aliases:
@@ -131,6 +133,8 @@ services:
     depends_on:
       cache-proxy:
         condition: service_healthy
+    sysctls:
+      net.ipv6.conf.all.disable_ipv6: 1
     networks:
       backend:
         aliases:
