@@ -107,8 +107,7 @@ services:
         - ./certs/pacman.local.key:/etc/nginx/ssl/pacman.local.key:r
         - ./certs/pacman.local.pem:/etc/nginx/ssl/pacman.local.pem:r
       ports:
-        - "8889:8889/tcp"
-        - "8889:8889/udp"
+        - "8888:8888/tcp"
       labels:
         - "autoheal=linuxpkg"
       networks:
@@ -127,8 +126,7 @@ services:
       - ./certs/flathub.local.key:/etc/nginx/ssl/flathub.local.key:r
       - ./certs/flathub.local.pem:/etc/nginx/ssl/flathub.local.pem:r
     ports:
-      - "8777:8777/tcp"
-      - "8777:8777/udp"
+      - "8776:8776/tcp"
     labels:
       - "autoheal=linuxpkg"
     depends_on:
