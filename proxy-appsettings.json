@@ -17,7 +17,7 @@
       },
       {
         "Source": "flathub.markridgwell.com",
-        "Target": "https://192.168.150.200:8776",
+        "Target": "http://192.168.150.200:8776",
         "TargetX": "https://dl.flathub.org",
         "Settings": [
           {
