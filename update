@@ -57,8 +57,6 @@ chmod 644 "$BASEDIR/certs/pacman.local.pem"
 
 "$BASEDIR/build-pacman-nginx"
 
-#sudo chown -R 10001:65533 /cache/arch-pkgs || die "Could not set npm permissions"
-
 sudo docker volume create \
   --opt type=none \
   --opt o=bind \
@@ -95,7 +93,7 @@ sudo docker volume create \
   --opt device=/cache/arch-pkgs \
   cache-pacoloco
 
-#sudo docker compose pull || die "Could not pull images"
+sudo docker compose pull || die "Could not pull images"
 sudo docker compose build || die "Could not build images"
 
 sudo docker compose up -d --remove-orphans || die "Could not start containers"
