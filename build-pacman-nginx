@@ -207,9 +207,9 @@ cat << EOF >> "$OUTPUT"
         server_name                flathub.local;
         proxy_cache                flathub_cache;
 
-        ssl_protocols              TLSv1.3;
-        ssl_certificate            ssl/flathub.local.pem;
-        ssl_certificate_key        ssl/flathub.local.key;
+#        ssl_protocols              TLSv1.3;
+#        ssl_certificate            ssl/flathub.local.pem;
+#        ssl_certificate_key        ssl/flathub.local.key;
 
         location /health {
                 access_log off;
