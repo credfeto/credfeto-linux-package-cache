@@ -65,8 +65,6 @@ services:
       - "7776:8081/udp"
     labels:
       - "autoheal=linuxpkg"
-    networks:
-      backend:
 
   cache-proxy:
     image: docker-registry.markridgwell.com/credfeto/cache-proxy:latest
@@ -84,9 +82,6 @@ services:
       - "7777:8081/udp"
     labels:
       - "autoheal=linuxpkg"
-    networks:
-#      backend:
-      frontend:
     depends_on:
       cache-pacman:
         condition: service_healthy
@@ -94,6 +89,7 @@ services:
   cache-pacman:
       build: ./pacman
       container_name: cache-pacman
+      hostname: pacman.local
       restart: always
       stop_grace_period: 5s
       stop_signal: SIGINT
@@ -109,14 +105,11 @@ services:
         - "autoheal=linuxpkg"
       sysctls:
         net.ipv6.conf.all.disable_ipv6: 1
-      networks:
-        backend:
-          aliases:
-            - pacman.local
 
   cache-flathub:
     build: ./flathub
     container_name: cache-flathub
+    hostname: flathub.local
     restart: always
     stop_grace_period: 5s
     stop_signal: SIGINT
@@ -135,10 +128,6 @@ services:
         condition: service_healthy
     sysctls:
       net.ipv6.conf.all.disable_ipv6: 1
-    networks:
-      backend:
-        aliases:
-          - flathub.local
 
   cache-pacoloco:
     #   to pull the image from github's registry:
@@ -167,15 +156,6 @@ services:
 #   user: 1000:1000
 #   or replace it for self-building with:
 #    build: https://github.com/anatol/pacoloco.git
-
-networks:
-  backend:
-    driver: bridge
-    enable_ipv6: false
-
-  frontend:
-    driver: bridge
-    enable_ipv6: false
 
 volumes:
   cache-aur-metadata:
