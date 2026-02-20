@@ -202,8 +202,8 @@ cat << EOF >> "$OUTPUT"
     # flathub.local
     server {
         listen 8776;
-        listen 8777 ssl; # you may want to listen on port 80, or add TLS
-        http2                      on;
+#        listen 8777 ssl; # you may want to listen on port 80, or add TLS
+#        http2                      on;
         server_name                flathub.local;
         proxy_cache                flathub_cache;
 
