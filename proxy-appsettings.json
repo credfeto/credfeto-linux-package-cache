@@ -3,8 +3,7 @@
     "Sites": [
       {
         "Source": "localhost",
-        "Target": "https://flathub.local:8777",
-        "Targets": "https://dl.flathub.org",
+        "Target": "https://dl.flathub.org",
         "Settings": [
           {
             "Match": "\\.filez$",
@@ -18,8 +17,7 @@
       },
       {
         "Source": "flathub.markridgwell.com",
-        "Target": "http://flathub.local:8776",
-        "Targets": "https://dl.flathub.org",
+        "Target": "https://dl.flathub.org",
         "Settings": [
           {
             "Match": "\\.filez$",

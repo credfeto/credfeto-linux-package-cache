@@ -88,52 +88,52 @@ services:
       - "7777:8081/udp"
     labels:
       - "autoheal=linuxpkg"
-    depends_on:
-      cache-pacman:
-        condition: service_healthy
+#    depends_on:
+#      cache-pacman:
+#        condition: service_healthy
     networks:
       - cache
 
-  cache-pacman:
-      build: ./pacman
-      container_name: cache-pacman
-      hostname: pacman.local
-      restart: always
-      stop_grace_period: 5s
-      stop_signal: SIGINT
-      volumes:
-        - cache-pacman:/var/cache/nginx/proxy
-        - ./certs/dh.pem:/etc/nginx/ssl/dh.pem:r
-        - ./certs/pacman.local.key:/etc/nginx/ssl/pacman.local.key:r
-        - ./certs/pacman.local.pem:/etc/nginx/ssl/pacman.local.pem:r
-      ports:
-        - "8888:8888/tcp"
-      labels:
-        - "autoheal=linuxpkg"
-      networks:
-        - cache
-
-  cache-flathub:
-    build: ./flathub
-    container_name: cache-flathub
-    hostname: flathub.local
-    restart: always
-    stop_grace_period: 5s
-    stop_signal: SIGINT
-    volumes:
-      - cache-flathub:/var/cache/nginx/proxy
-      - ./certs/dh.pem:/etc/nginx/ssl/dh.pem:r
-      - ./certs/flathub.local.key:/etc/nginx/ssl/flathub.local.key:r
-      - ./certs/flathub.local.pem:/etc/nginx/ssl/flathub.local.pem:r
-    ports:
-      - "8776:8776/tcp"
-    labels:
-      - "autoheal=linuxpkg"
-    depends_on:
-      cache-proxy:
-        condition: service_healthy
-    networks:
-      - cache
+#  cache-pacman:
+#      build: ./pacman
+#      container_name: cache-pacman
+#      hostname: pacman.local
+#      restart: always
+#      stop_grace_period: 5s
+#      stop_signal: SIGINT
+#      volumes:
+#        - cache-pacman:/var/cache/nginx/proxy
+#        - ./certs/dh.pem:/etc/nginx/ssl/dh.pem:r
+#        - ./certs/pacman.local.key:/etc/nginx/ssl/pacman.local.key:r
+#        - ./certs/pacman.local.pem:/etc/nginx/ssl/pacman.local.pem:r
+#      ports:
+#        - "8888:8888/tcp"
+#      labels:
+#        - "autoheal=linuxpkg"
+#      networks:
+#        - cache
+#
+#  cache-flathub:
+#    build: ./flathub
+#    container_name: cache-flathub
+#    hostname: flathub.local
+#    restart: always
+#    stop_grace_period: 5s
+#    stop_signal: SIGINT
+#    volumes:
+#      - cache-flathub:/var/cache/nginx/proxy
+#      - ./certs/dh.pem:/etc/nginx/ssl/dh.pem:r
+#      - ./certs/flathub.local.key:/etc/nginx/ssl/flathub.local.key:r
+#      - ./certs/flathub.local.pem:/etc/nginx/ssl/flathub.local.pem:r
+#    ports:
+#      - "8776:8776/tcp"
+#    labels:
+#      - "autoheal=linuxpkg"
+#    depends_on:
+#      cache-proxy:
+#        condition: service_healthy
+#    networks:
+#      - cache
 
   cache-pacoloco:
     #   to pull the image from github's registry:
