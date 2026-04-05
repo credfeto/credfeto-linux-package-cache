@@ -73,7 +73,7 @@ services:
     stop_signal: SIGINT
     volumes:
       - cache-proxy:/data
-      - ./proxy-appsettings.json:/usr/src/app/appsettings-local.json
+      - ./local/proxy-appsettings.json:/usr/src/app/appsettings-local.json:r
       - ./certs/proxy.local.pfx:/usr/src/app/server.pfx:r
     ports:
       - "7777:8081/tcp"

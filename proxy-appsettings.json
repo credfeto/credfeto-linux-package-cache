@@ -17,7 +17,7 @@
       },
       {
         "Source": "flathub.markridgwell.com",
-        "Target": "http://192.168.150.200:8776",
+        "Target": "http://LOCAL_IP:8776",
         "TargetX": "https://dl.flathub.org",
         "Settings": [
           {
@@ -36,7 +36,7 @@
       },
       {
         "Source": "pacman.markridgwell.com",
-        "Target": "http://192.168.150.200:8888",
+        "Target": "http://LOCAL_IP:8888",
         "TargetX": "https://pacman.local:8888",
         "Settings": [
           {
