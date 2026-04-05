@@ -57,12 +57,11 @@ chmod 644 "$BASEDIR/certs/pacman.local.pem"
 
 [ -f "$BASEDIR/.env" ] || die "Missing $BASEDIR/.env file"
 
-. "$BASEDIR/.env"
 
 "$BASEDIR/build-pacman-nginx"
 
-
-[ -z "$LOCAL_IP" ] || die "Missing LOCAL_IP in .env file"
+. "$BASEDIR/.env"
+[ -z "$LOCAL_IP" ] && die "Missing LOCAL_IP in .env file"
 
 sed "s/LOCAL_IP/$LOCAL_IP/g" "$BASEDIR/proxy-appsettings.json" > "$BASEDIR/local/proxy-appsettings.json"
 
