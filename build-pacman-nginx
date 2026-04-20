@@ -29,17 +29,30 @@ is_chaotic_aur_url()
   fi
 }
 
+is_cachyos_url()
+{
+  url=$1
+  regex_pattern='^Server = https://([^/]+?)/\$repo/\$arch$'
+
+  if [[ "$url" =~ $regex_pattern ]]; then
+      domain=${BASH_REMATCH[1]}
+      echo "$domain"
+  fi
+}
+
 BASEDIR="$(dirname "$(readlink -f "$0")")"
 OUTPUT="$BASEDIR/nginx.test.conf"
 
 ARCH_BASE_PORT=8000
 CHAOTIC_AUR_BASE_PORT=9000
+CACHYOS_BASE_PORT=10000
 
 # Assume Rate mirrors is defined
 sudo pacman -S --needed --noconfirm rate-mirrors
 
 [ -f "$BASEDIR/mirrorlists/arch" ] || rate-mirrors --allow-root --protocol=https  --save "$BASEDIR/mirrorlists/arch" arch || die "Could not load arch mirrors"
 [ -f "$BASEDIR/mirrorlists/chaotic" ] || rate-mirrors --allow-root --protocol=https --save "$BASEDIR/mirrorlists/chaotic" chaotic-aur || die "Could not load chaotic mirrors"
+[ -f "$BASEDIR/mirrorlists/cachyos" ] || rate-mirrors --allow-root --protocol=https --save "$BASEDIR/mirrorlists/cachyos" cachyos || die "Could not load cachyos mirrors"
 
 echo "Loading: Arch Mirrors"
 declare -a ARCH_MIRRORS=()
@@ -71,13 +84,29 @@ do
   fi
 done < "$BASEDIR/mirrorlists/chaotic"
 
+echo "Loading: CachyOS Mirrors"
+
+declare -a CACHYOS_MIRRORS=()
+while read -r line
+do
+  if [ -n "$line" ]; then
+    match=$(is_cachyos_url "$line")
+    if [ -n "$match" ]; then
+      echo " * $match"
+      CACHYOS_MIRRORS+=("$match")
+    fi
+  fi
+done < "$BASEDIR/mirrorlists/cachyos"
+
 
 echo ""
 echo "Summary:"
 echo " * Arch Mirrors: $ARCH_MIRRORS"
 echo " * Chaotic AUR Mirrors: CHAOTIC_AUR_MIRRORS"
-[ "${#ARCH_MIRRORS[@]}" = "0" ] && die "Mo Arch Mirrors found"
-[ "${#CHAOTIC_AUR_MIRRORS[@]}" = "0" ] && die "Mo Arch Mirrors found"
+echo " * CachyOS Mirrors: ${#CACHYOS_MIRRORS[@]}"
+[ "${#ARCH_MIRRORS[@]}" = "0" ] && die "No Arch Mirrors found"
+[ "${#CHAOTIC_AUR_MIRRORS[@]}" = "0" ] && die "No Chaotic AUR Mirrors found"
+[ "${#CACHYOS_MIRRORS[@]}" = "0" ] && die "No CachyOS Mirrors found"
 
 cat << EOF > "$OUTPUT"
 worker_processes  1;
@@ -138,6 +167,17 @@ done
 echo "    }" >> "$OUTPUT"
 echo ""
 
+echo "    upstream cachyos-mirrors {" >> "$OUTPUT"
+echo "        keepalive 64;" >> "$OUTPUT"
+for ((i = 0; i < ${#CACHYOS_MIRRORS[@]}; i++)); do
+    PORT=$((CACHYOS_BASE_PORT + i))
+    MIRROR=${CACHYOS_MIRRORS[i]}
+    echo "        # $MIRROR"
+    echo "        server 127.0.0.1:$PORT;" >> "$OUTPUT"
+done
+echo "    }" >> "$OUTPUT"
+echo ""
+
 
 for ((i = 0; i < ${#ARCH_MIRRORS[@]}; i++)); do
     PORT=$((ARCH_BASE_PORT + i))
@@ -184,6 +224,31 @@ for ((i = 0; i < ${#CHAOTIC_AUR_MIRRORS[@]}; i++)); do
             proxy_http_version  1.1;
             proxy_set_header    Connection "";
             rewrite ^ /demo$uri break;
+        }
+    }
+
+EOF
+done
+
+for ((i = 0; i < ${#CACHYOS_MIRRORS[@]}; i++)); do
+    PORT=$((CACHYOS_BASE_PORT + i))
+    MIRROR=${CACHYOS_MIRRORS[i]}
+
+    echo "CachyOS Server $i: $MIRROR"
+
+    cat << EOF >> "$OUTPUT"
+    server {
+
+        listen 127.0.0.1:$PORT;
+
+        location / {
+            rewrite ^/repo/(.*)$ /\$1  break;
+
+            proxy_pass https://$MIRROR;
+            proxy_ssl_server_name on;
+            proxy_set_header Host $MIRROR;
+            proxy_http_version  1.1;
+            proxy_set_header    Connection "";
         }
     }
 
@@ -277,6 +342,25 @@ cat << EOF >> "$OUTPUT"
 
         location /repo/chaotic-aur/ {
             proxy_pass http://chaotic-aur-mirrors;
+            proxy_http_version  1.1;
+            proxy_set_header    Connection "";
+
+            proxy_ssl_server_name on;
+            proxy_buffers       16 256k;
+            proxy_buffer_size   256k;
+            proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
+            proxy_cache_valid   200 302  24h;
+            proxy_cache_valid   404      30s;
+            proxy_cache_valid   301      1h;
+            proxy_cache_bypass  \$arg_should_bypass_cache;
+            proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504 http_429;
+            proxy_cache_lock    on;
+            add_header Cache-Control \$cache_header always;
+            add_header X-Cache-Status \$upstream_cache_status;
+        }
+
+        location ~ ^/repo/cachyos {
+            proxy_pass http://cachyos-mirrors;
             proxy_http_version  1.1;
             proxy_set_header    Connection "";
 
