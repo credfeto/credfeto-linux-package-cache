@@ -97,7 +97,6 @@ networks:
     enable_ipv6: true
 
 
-
 volumes:
   cache-aur-metadata:
     name: cache-aur-metadata
