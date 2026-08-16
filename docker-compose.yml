@@ -65,31 +65,6 @@ services:
     networks:
       - cache
 
-  cache-proxy:
-    image: docker-registry.markridgwell.com/credfeto/cache-proxy:latest
-    container_name: cache-proxy
-    hostname: cache-proxy
-    restart: always
-    stop_grace_period: 500s
-    stop_signal: SIGINT
-    volumes:
-      - cache-proxy:/data
-      - ./local/proxy-appsettings.json:/usr/src/app/appsettings-local.json:ro
-      - ./certs/proxy.local.pfx:/usr/src/app/server.pfx:ro
-    ports:
-      - "7777:8081/tcp"
-      - "7777:8081/udp"
-    labels:
-      - "autoheal=linuxpkg"
-#    depends_on:
-#      cache-pacman:
-#        condition: service_healthy
-    networks:
-      - cache
-
-#   if a specific user id is provided, you have to make sure
-#   the mounted directories have the same user id owner on host
-#   user: 1000:1000
 networks:
   cache:
     driver: bridge
@@ -102,9 +77,6 @@ volumes:
     external: true
   cache-aur-repos:
     name: cache-aur-repos
-    external: true
-  cache-proxy:
-    name: cache-proxy
     external: true
   cache-pacman:
     name: cache-pacman

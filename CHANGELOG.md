@@ -21,6 +21,7 @@ Please ADD ALL Changes to the UNRELEASED SECTION and not a specific release
 ### Deprecated
 ### Removed
 - Removed dead pacoloco.yaml config, cache-pacoloco docker volume, and unused arch-pkgs cache directory, since pacoloco was never actually wired into docker-compose.yml (pacman caching is handled by cache-proxy plus the host nginx from build-pacman-nginx)
+- Removed cache-proxy: the docker-compose service, its external cache-proxy volume, proxy-appsettings.json, PROXY_USER/proxy.local cert generation, the /cache/proxy directory setup, the LOCAL_IP/.env templating step it was the only consumer of, and its port 7777/7878 firewall rules. Traffic for pacman.markridgwell.com and flathub.markridgwell.com now goes straight to nginx (see the Changed entry above); AUR is unaffected, it uses the separate cache-aur app
 ### Deployment Changes
 <!--
 Releases that have at least been deployed to staging, BUT NOT necessarily released to live.  Changes should be moved from [Unreleased] into here as they are merged into the appropriate release branch

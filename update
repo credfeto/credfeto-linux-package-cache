@@ -9,14 +9,12 @@ die() {
 BASEDIR="$(dirname "$(readlink -f "$0")")"
 
 AUR_USER=root
-PROXY_USER=1654
 
 git pull
 
 [ -d /cache/ ] || sudo mkdir /cache
 [ -d /cache/flathub-pkgs ] || sudo mkdir /cache/flathub-pkgs
 [ -d /cache/pacman-pkgs ] || sudo mkdir /cache/pacman-pkgs
-[ -d /cache/proxy ] || sudo mkdir /cache/proxy
 [ -d /cache/aur ] || sudo mkdir /cache/aur
 [ -d /cache/aur/metadata ] || sudo mkdir /cache/aur/metadata
 [ -d /cache/aur/repos ] || sudo mkdir /cache/aur/repos
@@ -25,7 +23,6 @@ git pull
 
 sudo chown -R "$AUR_USER:$AUR_USER" /cache/aur/metadata || die "Could not set aur/metadata permissions"
 sudo chown -R "$AUR_USER:$AUR_USER" /cache/aur/repos || die "Could not set aur/repos permissions"
-sudo chown -R "$PROXY_USER:$PROXY_USER" /cache/proxy || die "Could not set proxy permissions"
 
 if [ ! -f "$BASEDIR/certs/dh.pem" ]; then
   echo "Generating PFS"
@@ -36,9 +33,6 @@ fi
 [ -f "$BASEDIR/certs/aur.local.pfx" ] || "$BASEDIR/certs/generate" aur.local
 [ -f "$BASEDIR/certs/aur.local.pfx" ] || die "No aur cert"
 
-[ -f "$BASEDIR/certs/proxy.local.pfx" ] || "$BASEDIR/certs/generate" proxy.local
-[ -f "$BASEDIR/certs/proxy.local.pfx" ] || die "No proxy cert"
-
 [ -f "$BASEDIR/certs/flathub.local.pfx" ] || "$BASEDIR/certs/generate" flathub.local
 [ -f "$BASEDIR/certs/flathub.local.pfx" ] || die "No flathub cert"
 
@@ -48,22 +42,12 @@ fi
 
 # Ensure Pfx is readable
 chmod 644 "$BASEDIR/certs/aur.local.pfx"
-chmod 644 "$BASEDIR/certs/proxy.local.pfx"
 chmod 644 "$BASEDIR/certs/flathub.local.key"
 chmod 644 "$BASEDIR/certs/flathub.local.pem"
 chmod 644 "$BASEDIR/certs/pacman.local.key"
 chmod 644 "$BASEDIR/certs/pacman.local.pem"
 
-[ -f "$BASEDIR/.env" ] || die "Missing $BASEDIR/.env file"
-
-
 "$BASEDIR/build-pacman-nginx"
-
-# shellcheck source=/dev/null
-. "$BASEDIR/.env"
-[ -z "$LOCAL_IP" ] && die "Missing LOCAL_IP in .env file"
-
-sed "s/LOCAL_IP/$LOCAL_IP/g" "$BASEDIR/proxy-appsettings.json" > "$BASEDIR/local/proxy-appsettings.json"
 
 "$BASEDIR/firewall"
 
@@ -78,12 +62,6 @@ sudo docker volume create \
   --opt o=bind \
   --opt device=/cache/aur/repos \
   cache-aur-repos
-
-sudo docker volume create \
-  --opt type=none \
-  --opt o=bind \
-  --opt device=/cache/proxy \
-  cache-proxy
 
 sudo docker volume create \
   --opt type=none \

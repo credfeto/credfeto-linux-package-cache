@@ -8,7 +8,7 @@ flathub.local.crt
 flathub.local.key
 flathub.local.pem
 flathub.local.pfx
-proxy.local.crt
-proxy.local.key
-proxy.local.pem
-proxy.local.pfx
+pacman.local.crt
+pacman.local.key
+pacman.local.pem
+pacman.local.pfx
