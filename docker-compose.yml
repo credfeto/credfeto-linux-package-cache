@@ -1,3 +1,4 @@
+---
 services:
   cache-watchtower:
     image: nickfedor/watchtower:latest
@@ -55,7 +56,7 @@ services:
     volumes:
       - cache-aur-metadata:/data/metadata:rw
       - cache-aur-repos:/data/repos:rw
-      - ./certs/aur.local.pfx:/usr/src/app/server.pfx:r
+      - ./certs/aur.local.pfx:/usr/src/app/server.pfx:ro
     ports:
       - "7776:8081/tcp"
       - "7776:8081/udp"
@@ -73,8 +74,8 @@ services:
     stop_signal: SIGINT
     volumes:
       - cache-proxy:/data
-      - ./local/proxy-appsettings.json:/usr/src/app/appsettings-local.json:r
-      - ./certs/proxy.local.pfx:/usr/src/app/server.pfx:r
+      - ./local/proxy-appsettings.json:/usr/src/app/appsettings-local.json:ro
+      - ./certs/proxy.local.pfx:/usr/src/app/server.pfx:ro
     ports:
       - "7777:8081/tcp"
       - "7777:8081/udp"
@@ -89,8 +90,6 @@ services:
 #   if a specific user id is provided, you have to make sure
 #   the mounted directories have the same user id owner on host
 #   user: 1000:1000
-#   or replace it for self-building with:
-#    build: https://github.com/anatol/pacoloco.git
 networks:
   cache:
     driver: bridge
@@ -112,7 +111,4 @@ volumes:
     external: true
   cache-flathub:
     name: cache-flathub
-    external: true
-  cache-pacoloco:
-    name: cache-pacoloco
     external: true

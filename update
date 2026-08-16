@@ -14,7 +14,6 @@ PROXY_USER=1654
 git pull
 
 [ -d /cache/ ] || sudo mkdir /cache
-[ -d /cache/arch-pkgs ] || sudo mkdir /cache/arch-pkgs
 [ -d /cache/flathub-pkgs ] || sudo mkdir /cache/flathub-pkgs
 [ -d /cache/pacman-pkgs ] || sudo mkdir /cache/pacman-pkgs
 [ -d /cache/proxy ] || sudo mkdir /cache/proxy
@@ -60,6 +59,7 @@ chmod 644 "$BASEDIR/certs/pacman.local.pem"
 
 "$BASEDIR/build-pacman-nginx"
 
+# shellcheck source=/dev/null
 . "$BASEDIR/.env"
 [ -z "$LOCAL_IP" ] && die "Missing LOCAL_IP in .env file"
 
@@ -96,12 +96,6 @@ sudo docker volume create \
   --opt o=bind \
   --opt device=/cache/pacman-pkgs \
   cache-pacman
-
-sudo docker volume create \
-  --opt type=none \
-  --opt o=bind \
-  --opt device=/cache/arch-pkgs \
-  cache-pacoloco
 
 sudo docker compose pull || die "Could not pull images"
 sudo docker compose build || die "Could not build images"
