@@ -158,20 +158,10 @@ http {
 
     # Immutable, content-addressed package/object files are safe to cache for a long
     # time; everything else (repo databases, summary/refs) keeps the short default so
-    # clients see updates promptly. proxy_cache_valid needs nginx >= 1.23.0 to accept
-    # a variable here; Arch's nginx package is always well past that.
-    map \$uri \$pkg_cache_time {
-        default                    24h;
-        ~*\.pkg\.tar\.zst\$        60d;
-        ~*\.pkg\.tar\.zst\.sig\$   60d;
-    }
-
-    map \$uri \$flathub_cache_time {
-        default             24h;
-        ~*\.filez\$         60d;
-        ~^/repo/deltas/     60d;
-    }
-
+    # clients see updates promptly. proxy_cache_valid's time argument can't be a
+    # variable (confirmed against nginx's own docs - no version unlocks it), so the
+    # split below is done via a dedicated location per content type instead, each
+    # with its own literal time.
     proxy_cache_path /cache/nginx
             keys_zone=proxy_cache:512m
             levels=1:2
@@ -332,6 +322,48 @@ cat << EOF >> "$OUTPUT"
                 return 200 '{"status":"UP"}';
         }
 
+        location ~* \.filez\$ {
+            proxy_pass          https://dl.flathub.org;
+            proxy_ssl_verify    off;
+            proxy_http_version  1.1;
+            proxy_ssl_server_name on;
+            proxy_set_header    Host dl.flathub.org;
+            proxy_set_header    Connection "";
+            proxy_set_header    X-Forwarded-Host 'dl.flathub.local';
+            proxy_buffers       16 256k;
+            proxy_buffer_size   256k;
+            proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
+            proxy_cache_valid   200 302  60d;
+            proxy_cache_valid   404      30s;
+            proxy_cache_valid   301      1h;
+            proxy_cache_bypass  \$arg_should_bypass_cache;
+            proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504 http_429;
+            proxy_cache_lock    on;
+            add_header Cache-Control \$cache_header always;
+            add_header X-Cache-Status \$upstream_cache_status;
+        }
+
+        location /repo/deltas/ {
+            proxy_pass          https://dl.flathub.org;
+            proxy_ssl_verify    off;
+            proxy_http_version  1.1;
+            proxy_ssl_server_name on;
+            proxy_set_header    Host dl.flathub.org;
+            proxy_set_header    Connection "";
+            proxy_set_header    X-Forwarded-Host 'dl.flathub.local';
+            proxy_buffers       16 256k;
+            proxy_buffer_size   256k;
+            proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
+            proxy_cache_valid   200 302  60d;
+            proxy_cache_valid   404      30s;
+            proxy_cache_valid   301      1h;
+            proxy_cache_bypass  \$arg_should_bypass_cache;
+            proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504 http_429;
+            proxy_cache_lock    on;
+            add_header Cache-Control \$cache_header always;
+            add_header X-Cache-Status \$upstream_cache_status;
+        }
+
         location / {
             proxy_pass          https://dl.flathub.org;
             proxy_ssl_verify    off;
@@ -343,7 +375,7 @@ cat << EOF >> "$OUTPUT"
             proxy_buffers       16 256k;
             proxy_buffer_size   256k;
             proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
-            proxy_cache_valid   200 302  \$flathub_cache_time;
+            proxy_cache_valid   200 302  24h;
             proxy_cache_valid   404      30s;
             proxy_cache_valid   301      1h;
             proxy_cache_bypass  \$arg_should_bypass_cache;
@@ -376,6 +408,25 @@ cat << EOF >> "$OUTPUT"
 
 
 
+        location ~* ^/repo/archlinux/.*\.pkg\.tar\.zst(\.sig)?\$ {
+            proxy_pass http://archlinux-mirrors;
+            proxy_http_version  1.1;
+            proxy_set_header    Connection "";
+
+            proxy_ssl_server_name on;
+            proxy_buffers       16 256k;
+            proxy_buffer_size   256k;
+            proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
+            proxy_cache_valid   200 302  60d;
+            proxy_cache_valid   404      30s;
+            proxy_cache_valid   301      1h;
+            proxy_cache_bypass  \$arg_should_bypass_cache;
+            proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504 http_429;
+            proxy_cache_lock    on;
+            add_header Cache-Control \$cache_header always;
+            add_header X-Cache-Status \$upstream_cache_status;
+        }
+
         location /repo/archlinux/ {
             proxy_pass http://archlinux-mirrors;
             proxy_http_version  1.1;
@@ -385,7 +436,26 @@ cat << EOF >> "$OUTPUT"
             proxy_buffers       16 256k;
             proxy_buffer_size   256k;
             proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
-            proxy_cache_valid   200 302  \$pkg_cache_time;
+            proxy_cache_valid   200 302  24h;
+            proxy_cache_valid   404      30s;
+            proxy_cache_valid   301      1h;
+            proxy_cache_bypass  \$arg_should_bypass_cache;
+            proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504 http_429;
+            proxy_cache_lock    on;
+            add_header Cache-Control \$cache_header always;
+            add_header X-Cache-Status \$upstream_cache_status;
+        }
+
+        location ~* ^/repo/chaotic-aur/.*\.pkg\.tar\.zst(\.sig)?\$ {
+            proxy_pass http://chaotic-aur-mirrors;
+            proxy_http_version  1.1;
+            proxy_set_header    Connection "";
+
+            proxy_ssl_server_name on;
+            proxy_buffers       16 256k;
+            proxy_buffer_size   256k;
+            proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
+            proxy_cache_valid   200 302  60d;
             proxy_cache_valid   404      30s;
             proxy_cache_valid   301      1h;
             proxy_cache_bypass  \$arg_should_bypass_cache;
@@ -404,7 +474,7 @@ cat << EOF >> "$OUTPUT"
             proxy_buffers       16 256k;
             proxy_buffer_size   256k;
             proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
-            proxy_cache_valid   200 302  \$pkg_cache_time;
+            proxy_cache_valid   200 302  24h;
             proxy_cache_valid   404      30s;
             proxy_cache_valid   301      1h;
             proxy_cache_bypass  \$arg_should_bypass_cache;
@@ -418,6 +488,25 @@ EOF
 if [ "${#CACHYOS_MIRRORS[@]}" -gt 0 ]; then
     cat << EOF >> "$OUTPUT"
 
+        location ~* ^/repo/cachyos/.*\.pkg\.tar\.zst(\.sig)?\$ {
+            proxy_pass http://cachyos-mirrors;
+            proxy_http_version  1.1;
+            proxy_set_header    Connection "";
+
+            proxy_ssl_server_name on;
+            proxy_buffers       16 256k;
+            proxy_buffer_size   256k;
+            proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
+            proxy_cache_valid   200 302  60d;
+            proxy_cache_valid   404      30s;
+            proxy_cache_valid   301      1h;
+            proxy_cache_bypass  \$arg_should_bypass_cache;
+            proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504 http_429;
+            proxy_cache_lock    on;
+            add_header Cache-Control \$cache_header always;
+            add_header X-Cache-Status \$upstream_cache_status;
+        }
+
         location ~ ^/repo/cachyos {
             proxy_pass http://cachyos-mirrors;
             proxy_http_version  1.1;
@@ -427,7 +516,7 @@ if [ "${#CACHYOS_MIRRORS[@]}" -gt 0 ]; then
             proxy_buffers       16 256k;
             proxy_buffer_size   256k;
             proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
-            proxy_cache_valid   200 302  \$pkg_cache_time;
+            proxy_cache_valid   200 302  24h;
             proxy_cache_valid   404      30s;
             proxy_cache_valid   301      1h;
             proxy_cache_bypass  \$arg_should_bypass_cache;
