@@ -281,7 +281,7 @@ cat << EOF >> "$OUTPUT"
     # flathub.local
     server {
         listen 8776;
-        listen 8777 ssl;
+        listen 7777 ssl;
         http2                      on;
         server_name                flathub.local;
         proxy_cache                proxy_cache;
@@ -321,7 +321,7 @@ cat << EOF >> "$OUTPUT"
     # pacman.local
     server {
         listen 8888;
-        listen 8889 ssl;
+        listen 7777 ssl;
         http2                      on;
         server_name                pacman.local;
         proxy_cache  proxy_cache;
