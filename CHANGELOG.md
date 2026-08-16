@@ -18,6 +18,7 @@ Please ADD ALL Changes to the UNRELEASED SECTION and not a specific release
 - Fixed two latent bugs in build-pacman-nginx found while touching the file: an unescaped $uri in the chaotic-aur demo rewrite was being expanded by bash to nothing (silently generating a broken nginx rewrite), and the mirror-count summary lines printed the wrong values (missing array index, and a literal unexpanded variable name)
 ### Changed
 - Re-enabled TLS on nginx's pacman.local (8889) and flathub.local (8777) vhosts using the already-generated local certs, gave immutable package/object files (.pkg.tar.zst, .sig, .filez, /repo/deltas/) a 60-day proxy cache lifetime instead of the blanket 24h default, added matching firewall rules, and made /ping respond identically to /health so it can serve as the Traefik health-check path directly against nginx
+- Moved pacman.local and flathub.local TLS back onto a single shared port (7777, matching what cache-proxy used to serve both on), distinguished by SNI instead of splitting them onto separate ports (8889/8777); no Traefik change is needed since it already points both pacman-service and flathub-service at port 7777
 ### Deprecated
 ### Removed
 - Removed dead pacoloco.yaml config, cache-pacoloco docker volume, and unused arch-pkgs cache directory, since pacoloco was never actually wired into docker-compose.yml (pacman caching is handled by cache-proxy plus the host nginx from build-pacman-nginx)

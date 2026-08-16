@@ -30,12 +30,13 @@ cd credfeto-linux-package-cache
 Additional recommended install
 
 * Add firewall rules to allow the following TCP Ports
-  * 8888 (plain) / 8889 (TLS) - for pacman repos, served directly by the nginx that `build-pacman-nginx` generates
-  * 8776 (plain) / 8777 (TLS) - for flathub, served directly by the same nginx
+  * 8888 (plain) - for pacman repos, served directly by the nginx that `build-pacman-nginx` generates
+  * 8776 (plain) - for flathub, served directly by the same nginx
+  * 7777 (TLS) - shared by both pacman.local and flathub.local via SNI
   * 7776 - for aur
 * Use NGINX or another front end proxy to resolve more friendly urls and TLS e.g:
-  * `https://pacman.example.com` points to ``https://<server>:8889``
-  * `https://flathub.example.com` points to ``https://<server>:8777``
+  * `https://pacman.example.com` points to ``https://<server>:7777`` (SNI: pacman.local)
+  * `https://flathub.example.com` points to ``https://<server>:7777`` (SNI: flathub.local)
   * `https://aur.example.com` points to ``http://<server>:7776``
 
 ## Client Setup
