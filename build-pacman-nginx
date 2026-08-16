@@ -1,11 +1,29 @@
 #! /bin/bash
 
 die() {
-    echo
-    echo "$@"
+    if [ -t 2 ]; then
+        printf '\n\033[31m✗\033[0m %s\n' "$*" >&2
+    else
+        printf '\n✗ %s\n' "$*" >&2
+    fi
     exit 1
 }
 
+success() {
+    if [ -t 1 ]; then
+        printf '\n\033[32m✓\033[0m %s\n' "$*"
+    else
+        printf '\n✓ %s\n' "$*"
+    fi
+}
+
+info() {
+    if [ -t 1 ]; then
+        printf '\n\033[32m→\033[0m %s\n' "$*"
+    else
+        printf '\n→ %s\n' "$*"
+    fi
+}
 
 is_arch_url()
 {
@@ -34,12 +52,17 @@ is_chaotic_aur_url()
 is_cachyos_url()
 {
   url=$1
+  # CachyOS mirrors don't share Arch/Chaotic's uniform layout: $arch/$repo are
+  # reversed vs Arch's own convention, and each mirror has its own path prefix
+  # (e.g. /cachyos/repo, /mirror/cachyos/repo, /repo) before that. Capture the
+  # host and that per-mirror prefix separately so both can be reassembled correctly.
   # shellcheck disable=SC2016 # $repo/$arch are literal pacman.conf tokens, not shell variables
-  regex_pattern='^Server = https://([^/]+?)/\$repo/\$arch$'
+  regex_pattern='^Server = https://([^/]+)(/.+)/\$arch/\$repo$'
 
   if [[ "$url" =~ $regex_pattern ]]; then
-      domain=${BASH_REMATCH[1]}
-      echo "$domain"
+      host=${BASH_REMATCH[1]}
+      prefix=${BASH_REMATCH[2]}
+      echo "$host|$prefix"
   fi
 }
 
@@ -57,7 +80,7 @@ sudo pacman -S --needed --noconfirm rate-mirrors
 [ -f "$BASEDIR/mirrorlists/chaotic" ] || rate-mirrors --allow-root --protocol=https --save "$BASEDIR/mirrorlists/chaotic" chaotic-aur || die "Could not load chaotic mirrors"
 [ -f "$BASEDIR/mirrorlists/cachyos" ] || rate-mirrors --allow-root --protocol=https --save "$BASEDIR/mirrorlists/cachyos" cachyos || die "Could not load cachyos mirrors"
 
-echo "Loading: Arch Mirrors"
+info "Loading: Arch Mirrors"
 declare -a ARCH_MIRRORS=()
 while read -r line
 do
@@ -73,7 +96,7 @@ done < "$BASEDIR/mirrorlists/arch"
 
 echo "Found: ${#ARCH_MIRRORS[@]}"
 
-echo "Loading: Chaotic AUR Mirrors"
+info "Loading: Chaotic AUR Mirrors"
 
 declare -a CHAOTIC_AUR_MIRRORS=()
 while read -r line
@@ -87,7 +110,7 @@ do
   fi
 done < "$BASEDIR/mirrorlists/chaotic"
 
-echo "Loading: CachyOS Mirrors"
+info "Loading: CachyOS Mirrors"
 
 declare -a CACHYOS_MIRRORS=()
 while read -r line
@@ -109,7 +132,10 @@ echo " * Chaotic AUR Mirrors: ${#CHAOTIC_AUR_MIRRORS[@]}"
 echo " * CachyOS Mirrors: ${#CACHYOS_MIRRORS[@]}"
 [ "${#ARCH_MIRRORS[@]}" = "0" ] && die "No Arch Mirrors found"
 [ "${#CHAOTIC_AUR_MIRRORS[@]}" = "0" ] && die "No Chaotic AUR Mirrors found"
-[ "${#CACHYOS_MIRRORS[@]}" = "0" ] && die "No CachyOS Mirrors found"
+# CachyOS is optional third-party support layered on top of the core Arch/Chaotic-AUR
+# cache: losing it for a run (mirror list glitch, upstream layout change) must not
+# block regenerating everything else, so this warns and omits CachyOS instead of dying.
+[ "${#CACHYOS_MIRRORS[@]}" = "0" ] && info "No CachyOS Mirrors found - omitting CachyOS support from this build"
 
 cat << EOF > "$OUTPUT"
 worker_processes  1;
@@ -186,16 +212,18 @@ done
 echo "    }" >> "$OUTPUT"
 echo ""
 
-echo "    upstream cachyos-mirrors {" >> "$OUTPUT"
-echo "        keepalive 64;" >> "$OUTPUT"
-for ((i = 0; i < ${#CACHYOS_MIRRORS[@]}; i++)); do
-    PORT=$((CACHYOS_BASE_PORT + i))
-    MIRROR=${CACHYOS_MIRRORS[i]}
-    echo "        # $MIRROR"
-    echo "        server 127.0.0.1:$PORT;" >> "$OUTPUT"
-done
-echo "    }" >> "$OUTPUT"
-echo ""
+if [ "${#CACHYOS_MIRRORS[@]}" -gt 0 ]; then
+    echo "    upstream cachyos-mirrors {" >> "$OUTPUT"
+    echo "        keepalive 64;" >> "$OUTPUT"
+    for ((i = 0; i < ${#CACHYOS_MIRRORS[@]}; i++)); do
+        PORT=$((CACHYOS_BASE_PORT + i))
+        ENTRY=${CACHYOS_MIRRORS[i]}
+        echo "        # ${ENTRY%%|*}${ENTRY#*|}"
+        echo "        server 127.0.0.1:$PORT;" >> "$OUTPUT"
+    done
+    echo "    }" >> "$OUTPUT"
+    echo ""
+fi
 
 
 for ((i = 0; i < ${#ARCH_MIRRORS[@]}; i++)); do
@@ -249,30 +277,38 @@ for ((i = 0; i < ${#CHAOTIC_AUR_MIRRORS[@]}; i++)); do
 EOF
 done
 
-for ((i = 0; i < ${#CACHYOS_MIRRORS[@]}; i++)); do
-    PORT=$((CACHYOS_BASE_PORT + i))
-    MIRROR=${CACHYOS_MIRRORS[i]}
+if [ "${#CACHYOS_MIRRORS[@]}" -gt 0 ]; then
+    for ((i = 0; i < ${#CACHYOS_MIRRORS[@]}; i++)); do
+        PORT=$((CACHYOS_BASE_PORT + i))
+        ENTRY=${CACHYOS_MIRRORS[i]}
+        MIRROR_HOST=${ENTRY%%|*}
+        MIRROR_PATH=${ENTRY#*|}
 
-    echo "CachyOS Server $i: $MIRROR"
+        echo "CachyOS Server $i: $MIRROR_HOST$MIRROR_PATH"
 
-    cat << EOF >> "$OUTPUT"
+        # Client-facing requests arrive here as /repo/cachyos/$arch/$repo/<file> (the
+        # pacman.local location below forwards the URI through unrewritten). Swap that
+        # fixed "/repo/cachyos" prefix for this mirror's own path prefix before proxying,
+        # since real CachyOS mirrors don't agree on what that prefix is.
+        cat << EOF >> "$OUTPUT"
     server {
 
         listen 127.0.0.1:$PORT;
 
         location / {
-            rewrite ^/repo/(.*)$ /\$1  break;
+            rewrite ^/repo/cachyos/(.*)$ $MIRROR_PATH/\$1  break;
 
-            proxy_pass https://$MIRROR;
+            proxy_pass https://$MIRROR_HOST;
             proxy_ssl_server_name on;
-            proxy_set_header Host $MIRROR;
+            proxy_set_header Host $MIRROR_HOST;
             proxy_http_version  1.1;
             proxy_set_header    Connection "";
         }
     }
 
 EOF
-done
+    done
+fi
 
 
 
@@ -377,6 +413,10 @@ cat << EOF >> "$OUTPUT"
             add_header Cache-Control \$cache_header always;
             add_header X-Cache-Status \$upstream_cache_status;
         }
+EOF
+
+if [ "${#CACHYOS_MIRRORS[@]}" -gt 0 ]; then
+    cat << EOF >> "$OUTPUT"
 
         location ~ ^/repo/cachyos {
             proxy_pass http://cachyos-mirrors;
@@ -396,6 +436,10 @@ cat << EOF >> "$OUTPUT"
             add_header Cache-Control \$cache_header always;
             add_header X-Cache-Status \$upstream_cache_status;
         }
+EOF
+fi
+
+cat << EOF >> "$OUTPUT"
     }
 
 #    ssl_prefer_server_ciphers on;
@@ -412,3 +456,5 @@ sudo nginx -t -c "$OUTPUT" || die "Invalid nginx configuration generated"
 sudo cp "$OUTPUT" "$BASEDIR/pacman/nginx.conf"
 sudo cp "$OUTPUT" "/etc/nginx/nginx.conf"
 sudo nginx -s reload
+
+success "nginx config regenerated and reloaded"
