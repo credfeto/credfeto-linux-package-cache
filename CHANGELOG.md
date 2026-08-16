@@ -15,6 +15,7 @@ Please ADD ALL Changes to the UNRELEASED SECTION and not a specific release
 - Added .ai-instructions and ai/local/index.md from cs-template standard
 ### Fixed
 - Fixed missing trailing newline in firewall script
+- Fixed typo in credfeto-linux-package-cache.service WorkingDirectory (credfeto-linx-package-cache -> credfeto-linux-package-cache) that caused the systemd timer to fail at CHDIR on every scheduled run, silently preventing nginx mirror config regeneration
 ### Changed
 ### Deprecated
 ### Removed
