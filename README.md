@@ -3,15 +3,18 @@
 docker compose for linux package cache for arch linux and flathub
 
 Pacman Repos:
+
 * core
 * extra
 * multilib
 * chaotic-aur
 
 Flatpak repos
+
 * Flathub
 
 AUR
+
 * note this is an experimental cache/proxy, and still hits the aur RPC to get package metadata
 
 ## Server Setup
@@ -25,14 +28,15 @@ cd credfeto-linux-package-cache
 ```
 
 Additional recommended install
+
 * Add firewall rules to allow the following TCP Ports
-  - 7878 - for pacman repos
-  - 7777 - for flathub
-  - 7776 - for aur
-* Use NGINX or front end other front end proxy to resolve more friendly urls and TLS e.g:
-  - https://pacman.example.com points to ``http://<server>:7878``
-  - https://flathub.example.com points to ``http://<server>:7777``
-  - https://aur.example.com points to ``http://<server>:7776``
+  * 8888 (plain) / 8889 (TLS) - for pacman repos, served directly by the nginx that `build-pacman-nginx` generates
+  * 8776 (plain) / 8777 (TLS) - for flathub, served directly by the same nginx
+  * 7776 - for aur
+* Use NGINX or another front end proxy to resolve more friendly urls and TLS e.g:
+  * `https://pacman.example.com` points to ``https://<server>:8889``
+  * `https://flathub.example.com` points to ``https://<server>:8777``
+  * `https://aur.example.com` points to ``http://<server>:7776``
 
 ## Client Setup
 
@@ -53,7 +57,7 @@ Server = https://pacman.example.com/repo/archlinux/$repo/os/$arch
 Server = https://pacman.example.com/repo/chaotic-aur/x86_64
 ```
 
-note: could keep the existing include references and use CacheServer instead so it uses the Included mirrorlist as a 
+note: could keep the existing include references and use CacheServer instead so it uses the Included mirrorlist as a
 fallback to the cache:
 
 ```ini
@@ -77,7 +81,7 @@ CacheServer = https://pacman.example.com/repo/chaotic-aur/x86_64
 
 ### AUR (Yay)
 
-Copy the following into ~/.config/yay/config.json adjusting hostnames as appropriate 
+Copy the following into ~/.config/yay/config.json adjusting hostnames as appropriate
 
 ```json
 {
@@ -92,8 +96,3 @@ Copy the following into ~/.config/yay/config.json adjusting hostnames as appropr
 ```bash
 sudo flatpak remote-modify --url=https://flathub.example.com/repo/ flathub-verified
 ```
-
-
-
-
-

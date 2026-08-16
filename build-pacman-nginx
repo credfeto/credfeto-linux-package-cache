@@ -10,6 +10,7 @@ die() {
 is_arch_url()
 {
   url=$1
+  # shellcheck disable=SC2016 # $repo/$arch are literal pacman.conf tokens, not shell variables
   regex_pattern='^Server = https://([^/]+?)/archlinux/\$repo/os/\$arch$'
 
   if [[ "$url" =~ $regex_pattern ]]; then
@@ -21,6 +22,7 @@ is_arch_url()
 is_chaotic_aur_url()
 {
   url=$1
+  # shellcheck disable=SC2016 # $repo/$arch are literal pacman.conf tokens, not shell variables
   regex_pattern='^Server = https://([^/]+?)/\$repo/\$arch$'
 
   if [[ "$url" =~ $regex_pattern ]]; then
@@ -32,6 +34,7 @@ is_chaotic_aur_url()
 is_cachyos_url()
 {
   url=$1
+  # shellcheck disable=SC2016 # $repo/$arch are literal pacman.conf tokens, not shell variables
   regex_pattern='^Server = https://([^/]+?)/\$repo/\$arch$'
 
   if [[ "$url" =~ $regex_pattern ]]; then
@@ -101,8 +104,8 @@ done < "$BASEDIR/mirrorlists/cachyos"
 
 echo ""
 echo "Summary:"
-echo " * Arch Mirrors: $ARCH_MIRRORS"
-echo " * Chaotic AUR Mirrors: CHAOTIC_AUR_MIRRORS"
+echo " * Arch Mirrors: ${#ARCH_MIRRORS[@]}"
+echo " * Chaotic AUR Mirrors: ${#CHAOTIC_AUR_MIRRORS[@]}"
 echo " * CachyOS Mirrors: ${#CACHYOS_MIRRORS[@]}"
 [ "${#ARCH_MIRRORS[@]}" = "0" ] && die "No Arch Mirrors found"
 [ "${#CHAOTIC_AUR_MIRRORS[@]}" = "0" ] && die "No Chaotic AUR Mirrors found"
@@ -125,6 +128,22 @@ http {
         200     "public";
         302     "public";
         default "no-cache";
+    }
+
+    # Immutable, content-addressed package/object files are safe to cache for a long
+    # time; everything else (repo databases, summary/refs) keeps the short default so
+    # clients see updates promptly. proxy_cache_valid needs nginx >= 1.23.0 to accept
+    # a variable here; Arch's nginx package is always well past that.
+    map \$uri \$pkg_cache_time {
+        default                    24h;
+        ~*\.pkg\.tar\.zst\$        60d;
+        ~*\.pkg\.tar\.zst\.sig\$   60d;
+    }
+
+    map \$uri \$flathub_cache_time {
+        default             24h;
+        ~*\.filez\$         60d;
+        ~^/repo/deltas/     60d;
     }
 
     proxy_cache_path /cache/nginx
@@ -223,7 +242,7 @@ for ((i = 0; i < ${#CHAOTIC_AUR_MIRRORS[@]}; i++)); do
             proxy_set_header Host $MIRROR;
             proxy_http_version  1.1;
             proxy_set_header    Connection "";
-            rewrite ^ /demo$uri break;
+            rewrite ^ /demo\$uri break;
         }
     }
 
@@ -262,16 +281,16 @@ cat << EOF >> "$OUTPUT"
     # flathub.local
     server {
         listen 8776;
-#        listen 8777 ssl; # you may want to listen on port 80, or add TLS
-#        http2                      on;
+        listen 8777 ssl;
+        http2                      on;
         server_name                flathub.local;
         proxy_cache                proxy_cache;
 
-#        ssl_protocols              TLSv1.3;
-#        ssl_certificate            ssl/flathub.local.pem;
-#        ssl_certificate_key        ssl/flathub.local.key;
+        ssl_protocols              TLSv1.3;
+        ssl_certificate            $BASEDIR/certs/flathub.local.pem;
+        ssl_certificate_key        $BASEDIR/certs/flathub.local.key;
 
-        location /health {
+        location ~ ^/(health|ping)\$ {
                 access_log off;
                 add_header 'Content-Type' 'application/json';
                 return 200 '{"status":"UP"}';
@@ -288,7 +307,7 @@ cat << EOF >> "$OUTPUT"
             proxy_buffers       16 256k;
             proxy_buffer_size   256k;
             proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
-            proxy_cache_valid   200 302  24h;
+            proxy_cache_valid   200 302  \$flathub_cache_time;
             proxy_cache_valid   404      30s;
             proxy_cache_valid   301      1h;
             proxy_cache_bypass  \$arg_should_bypass_cache;
@@ -302,17 +321,17 @@ cat << EOF >> "$OUTPUT"
     # pacman.local
     server {
         listen 8888;
-#        listen 8889 ssl;
-#        http2                      on;
+        listen 8889 ssl;
+        http2                      on;
         server_name                pacman.local;
         proxy_cache  proxy_cache;
 
-#        ssl_protocols              TLSv1.3;
-#        ssl_certificate            ssl/pacman.local.pem;
-#        ssl_certificate_key        ssl/pacman.local.key;
+        ssl_protocols              TLSv1.3;
+        ssl_certificate            $BASEDIR/certs/pacman.local.pem;
+        ssl_certificate_key        $BASEDIR/certs/pacman.local.key;
 
         # HA Proxy
-        location /health {
+        location ~ ^/(health|ping)\$ {
                 access_log on;
                 add_header 'Content-Type' 'application/json';
                 add_header 'X-Direct' 'True';
@@ -330,7 +349,7 @@ cat << EOF >> "$OUTPUT"
             proxy_buffers       16 256k;
             proxy_buffer_size   256k;
             proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
-            proxy_cache_valid   200 302  24h;
+            proxy_cache_valid   200 302  \$pkg_cache_time;
             proxy_cache_valid   404      30s;
             proxy_cache_valid   301      1h;
             proxy_cache_bypass  \$arg_should_bypass_cache;
@@ -349,7 +368,7 @@ cat << EOF >> "$OUTPUT"
             proxy_buffers       16 256k;
             proxy_buffer_size   256k;
             proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
-            proxy_cache_valid   200 302  24h;
+            proxy_cache_valid   200 302  \$pkg_cache_time;
             proxy_cache_valid   404      30s;
             proxy_cache_valid   301      1h;
             proxy_cache_bypass  \$arg_should_bypass_cache;
@@ -368,7 +387,7 @@ cat << EOF >> "$OUTPUT"
             proxy_buffers       16 256k;
             proxy_buffer_size   256k;
             proxy_cache_key     \$scheme://\$host\$uri\$is_args\$query_string;
-            proxy_cache_valid   200 302  24h;
+            proxy_cache_valid   200 302  \$pkg_cache_time;
             proxy_cache_valid   404      30s;
             proxy_cache_valid   301      1h;
             proxy_cache_bypass  \$arg_should_bypass_cache;
