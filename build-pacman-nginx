@@ -74,21 +74,29 @@ is_resolvable()
 
 # Drops a dead mirror host from every mirrorlist file that mentions it (all
 # of them, not just the one it was found in - a host is only ever pruned
-# because it's dead, so removing it everywhere is always correct and keeps
-# this the one place that knows the full file list), so a host found
-# unresolvable or rejected by nginx -t doesn't keep coming back on every run
-# between full re-ranks. Reads the file list from MIRROR_SPECS (field 1 of
-# each row) rather than a separate enumeration.
+# because it's dead, so removing it everywhere is always correct) and from
+# its mirror array, so a host found unresolvable or rejected by nginx -t
+# doesn't keep coming back on every run between full re-ranks and doesn't
+# linger in the array render_and_test_config works from. Reads MIRROR_SPECS
+# for both the file list (field 1) and the array name (field 5) rather than
+# a separate enumeration or a second pass over the table. Returns success
+# only if something was actually removed (file or array), so callers can
+# tell "this was one of our mirrors" apart from nginx naming some other host
+# (e.g. dl.flathub.org) as unreachable.
 prune_mirror_host()
 {
   host=$1
+  removed=1
   for spec in "${MIRROR_SPECS[@]}"; do
-    IFS='|' read -r list _ _ _ _ <<< "$spec"
+    IFS='|' read -r list _ _ _ array_name <<< "$spec"
     if [ -f "$list" ] && grep -qF "$host" "$list"; then
       info "Pruning unreachable mirror $host from $list"
       grep -vF "$host" "$list" > "$list.tmp" && mv "$list.tmp" "$list"
+      removed=0
     fi
+    remove_mirror_from_array "$array_name" "$host" && removed=0
   done
+  return $removed
 }
 
 # A mirrorlist is due for a full rate-mirrors re-rank if it is missing, or
@@ -203,8 +211,6 @@ for spec in "${MIRROR_SPECS[@]}"; do
   fi
 done
 
-# load_mirrors creates each array itself (via its "local -n"), so no
-# pre-declaration is needed here.
 for spec in "${MIRROR_SPECS[@]}"; do
   IFS='|' read -r mirrorlist_file label _ matcher_fn out_array_name <<< "$spec"
   info "Loading: $label Mirrors"
@@ -633,6 +639,8 @@ cat << EOF >> "$OUTPUT"
 EOF
 
 
+local status
+
 nginx_test_output=$(sudo nginx -t -c "$OUTPUT" 2>&1)
 status=$?
 printf '%s\n' "$nginx_test_output" | tee "$NGINX_TEST_LOG" >&2
@@ -645,12 +653,12 @@ while true; do
     break
   fi
 
-  [ "$attempt" -ge "$NGINX_TEST_MAX_ATTEMPTS" ] && die "Invalid nginx configuration generated after $NGINX_TEST_MAX_ATTEMPTS attempts (see above)"
+  [ "$attempt" -ge "$NGINX_TEST_MAX_ATTEMPTS" ] && die "Invalid nginx configuration generated after $NGINX_TEST_MAX_ATTEMPTS attempts (see above, or $NGINX_TEST_LOG)"
 
   # nginx prints exactly one "host not found in upstream "X"" line per dead
   # host; prune every one it names and retry rather than dying on the first.
   bad_hosts=$(printf '%s\n' "$nginx_test_output" | grep -oP 'host not found in upstream "\K[^"]+' | sort -u)
-  [ -z "$bad_hosts" ] && die "Invalid nginx configuration generated (see above) - not a recognised dead-mirror error, giving up"
+  [ -z "$bad_hosts" ] && die "Invalid nginx configuration generated (see above, or $NGINX_TEST_LOG) - not a recognised dead-mirror error, giving up"
 
   # If none of the named hosts belonged to any mirror array, retrying would
   # regenerate an identical config and fail the same way (e.g. nginx naming
@@ -658,18 +666,9 @@ while true; do
   # remaining attempts.
   pruned_any=""
   while read -r bad_host; do
-    prune_mirror_host "$bad_host"
-    removed=1
-    for spec in "${MIRROR_SPECS[@]}"; do
-      IFS='|' read -r _ _ _ _ out_array_name <<< "$spec"
-      if remove_mirror_from_array "$out_array_name" "$bad_host"; then
-        removed=0
-        break
-      fi
-    done
-    [ "$removed" = "0" ] && pruned_any=1
+    prune_mirror_host "$bad_host" && pruned_any=1
   done <<< "$bad_hosts"
-  [ -z "$pruned_any" ] && die "Invalid nginx configuration generated (see above) - named host(s) are not a known mirror, giving up"
+  [ -z "$pruned_any" ] && die "Invalid nginx configuration generated (see above, or $NGINX_TEST_LOG) - named host(s) are not a known mirror, giving up"
 
   attempt=$((attempt + 1))
 done
