@@ -72,13 +72,18 @@ is_resolvable()
   getent hosts "$host" > /dev/null 2>&1
 }
 
-# Drops a dead mirror host from every mirrorlist file that mentions it, so a
-# host found unresolvable or rejected by nginx -t doesn't keep coming back on
-# every run between full re-ranks.
+# Drops a dead mirror host from every mirrorlist file that mentions it (all
+# of them, not just the one it was found in - a host is only ever pruned
+# because it's dead, so removing it everywhere is always correct and keeps
+# this the one place that knows the full file list), so a host found
+# unresolvable or rejected by nginx -t doesn't keep coming back on every run
+# between full re-ranks. Reads the file list from MIRROR_SPECS (field 1 of
+# each row) rather than a separate enumeration.
 prune_mirror_host()
 {
   host=$1
-  for list in "${MIRRORLIST_FILES[@]}"; do
+  for spec in "${MIRROR_SPECS[@]}"; do
+    IFS='|' read -r list _ _ _ _ <<< "$spec"
     if [ -f "$list" ] && grep -qF "$host" "$list"; then
       info "Pruning unreachable mirror $host from $list"
       grep -vF "$host" "$list" > "$list.tmp" && mv "$list.tmp" "$list"
@@ -86,21 +91,31 @@ prune_mirror_host()
   done
 }
 
-# A mirrorlist is due for a full rate-mirrors re-rank if it is missing or has
-# not been refreshed in MIRRORLIST_MAX_AGE_DAYS days, so mirrors that quietly
-# rot (or better ones that appear) get picked up on a routine cadence rather
-# than only once at first bootstrap.
+# A mirrorlist is due for a full rate-mirrors re-rank if it is missing, or
+# its ".ranked" marker is missing or older than MIRRORLIST_MAX_AGE_DAYS days,
+# so mirrors that quietly rot (or better ones that appear) get picked up on
+# a routine cadence rather than only once at first bootstrap. Staleness is
+# tracked via a separate marker file, touched only on a real re-rank
+# (see MIRROR_SPECS loop below), rather than the mirrorlist file's own
+# mtime: prune_mirror_host rewrites that file too, so using its mtime would
+# mean every pruned mirror resets the re-rank clock - the list could only
+# ever shrink between re-ranks instead of being topped back up.
 needs_mirrorlist_refresh()
 {
   file=$1
+  marker="$file.ranked"
   [ -f "$file" ] || return 0
-  [ -n "$(find "$file" -mtime "+${MIRRORLIST_MAX_AGE_DAYS}" 2>/dev/null)" ]
+  [ -f "$marker" ] || return 0
+  [ -n "$(find "$marker" -mtime "+${MIRRORLIST_MAX_AGE_DAYS}" 2>/dev/null)" ]
 }
 
 # Parses $list_file with $matcher_fn (one of the is_*_url functions above)
 # into the array named $3, skipping and pruning any host that doesn't
-# resolve. Shared by all three mirror kinds so a fourth kind is one row in
-# MIRROR_LOAD_SPECS below rather than a fourth copy of this loop.
+# resolve. Pruning (via prune_mirror_host) checks every mirrorlist file, not
+# just $list_file, so loading one list can also rewrite another's file if
+# the same dead host is somehow listed in both. Shared by all three mirror
+# kinds so a fourth kind is one row in MIRROR_SPECS below rather than a
+# fourth copy of this loop.
 load_mirrors()
 {
   local matcher_fn=$1
@@ -165,37 +180,35 @@ NGINX_TEST_MAX_ATTEMPTS=5
 MIRRORLIST_ARCH="$BASEDIR/mirrorlists/arch"
 MIRRORLIST_CHAOTIC="$BASEDIR/mirrorlists/chaotic"
 MIRRORLIST_CACHYOS="$BASEDIR/mirrorlists/cachyos"
-declare -a MIRRORLIST_FILES=("$MIRRORLIST_ARCH" "$MIRRORLIST_CHAOTIC" "$MIRRORLIST_CACHYOS")
+
+# Single source of truth for the three mirror kinds: file|label|rate-mirrors
+# repo arg|matcher function|mirror array name. Refresh, load, and the retry
+# driver's pruning all iterate this one table, so a fourth mirror kind is
+# one more row here rather than a fourth copy of any of those three loops.
+declare -a MIRROR_SPECS=(
+  "$MIRRORLIST_ARCH|Arch|arch|is_arch_url|ARCH_MIRRORS"
+  "$MIRRORLIST_CHAOTIC|Chaotic AUR|chaotic-aur|is_chaotic_aur_url|CHAOTIC_AUR_MIRRORS"
+  "$MIRRORLIST_CACHYOS|CachyOS|cachyos|is_cachyos_url|CACHYOS_MIRRORS"
+)
 
 # Assume Rate mirrors is defined
 sudo pacman -S --needed --noconfirm rate-mirrors
 
-declare -a MIRROR_REFRESH_SPECS=(
-  "$MIRRORLIST_ARCH|Arch|arch"
-  "$MIRRORLIST_CHAOTIC|Chaotic AUR|chaotic-aur"
-  "$MIRRORLIST_CACHYOS|CachyOS|cachyos"
-)
-for spec in "${MIRROR_REFRESH_SPECS[@]}"; do
-  IFS='|' read -r mirrorlist_file label rate_mirrors_repo <<< "$spec"
+for spec in "${MIRROR_SPECS[@]}"; do
+  IFS='|' read -r mirrorlist_file label rate_mirrors_repo _ _ <<< "$spec"
   if needs_mirrorlist_refresh "$mirrorlist_file"; then
     info "$label mirror list missing or older than $MIRRORLIST_MAX_AGE_DAYS days - re-ranking"
     rate-mirrors --allow-root --protocol=https --save "$mirrorlist_file" "$rate_mirrors_repo" || die "Could not load $label mirrors"
+    touch "$mirrorlist_file.ranked"
   fi
 done
 
-declare -a ARCH_MIRRORS=()
-declare -a CHAOTIC_AUR_MIRRORS=()
-declare -a CACHYOS_MIRRORS=()
-
-declare -a MIRROR_LOAD_SPECS=(
-  "is_arch_url|$MIRRORLIST_ARCH|ARCH_MIRRORS|Arch"
-  "is_chaotic_aur_url|$MIRRORLIST_CHAOTIC|CHAOTIC_AUR_MIRRORS|Chaotic AUR"
-  "is_cachyos_url|$MIRRORLIST_CACHYOS|CACHYOS_MIRRORS|CachyOS"
-)
-for spec in "${MIRROR_LOAD_SPECS[@]}"; do
-  IFS='|' read -r matcher_fn list_file out_array_name label <<< "$spec"
+# load_mirrors creates each array itself (via its "local -n"), so no
+# pre-declaration is needed here.
+for spec in "${MIRROR_SPECS[@]}"; do
+  IFS='|' read -r mirrorlist_file label _ matcher_fn out_array_name <<< "$spec"
   info "Loading: $label Mirrors"
-  load_mirrors "$matcher_fn" "$list_file" "$out_array_name"
+  load_mirrors "$matcher_fn" "$mirrorlist_file" "$out_array_name"
 done
 
 echo ""
@@ -647,9 +660,13 @@ while true; do
   while read -r bad_host; do
     prune_mirror_host "$bad_host"
     removed=1
-    remove_mirror_from_array ARCH_MIRRORS "$bad_host" && removed=0
-    remove_mirror_from_array CHAOTIC_AUR_MIRRORS "$bad_host" && removed=0
-    remove_mirror_from_array CACHYOS_MIRRORS "$bad_host" && removed=0
+    for spec in "${MIRROR_SPECS[@]}"; do
+      IFS='|' read -r _ _ _ _ out_array_name <<< "$spec"
+      if remove_mirror_from_array "$out_array_name" "$bad_host"; then
+        removed=0
+        break
+      fi
+    done
     [ "$removed" = "0" ] && pruned_any=1
   done <<< "$bad_hosts"
   [ -z "$pruned_any" ] && die "Invalid nginx configuration generated (see above) - named host(s) are not a known mirror, giving up"
