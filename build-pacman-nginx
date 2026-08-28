@@ -220,7 +220,13 @@ CHAOTIC_AUR_BASE_PORT=9000
 CACHYOS_BASE_PORT=10000
 
 MIRRORLIST_MAX_AGE_DAYS=7
-NGINX_TEST_MAX_ATTEMPTS=5
+# nginx -t may only report the first dead host it hits per invocation
+# rather than every one at once, so several simultaneously-dead mirrors
+# could each need their own attempt. Each attempt is cheap (no DNS
+# re-check, no mirrorlist reload - see render_and_test_config), so a
+# generous cap costs little and avoids giving up while pruning is still
+# making genuine progress.
+NGINX_TEST_MAX_ATTEMPTS=20
 
 MIRRORLIST_ARCH="$BASEDIR/mirrorlists/arch"
 MIRRORLIST_CHAOTIC="$BASEDIR/mirrorlists/chaotic"
@@ -680,9 +686,19 @@ local status
 
 nginx_test_output=$(sudo nginx -t -c "$OUTPUT" 2>&1)
 status=$?
-printf '%s\n' "$nginx_test_output" | tee "$NGINX_TEST_LOG" >&2
+info "$nginx_test_output"
+# Appended, not overwritten, so a run that takes several attempts to
+# converge keeps every attempt's output, not just the last one; the log is
+# truncated fresh at the start of each script run (see below), so this
+# never grows across separate runs.
+printf '%s\n' "$nginx_test_output" >> "$NGINX_TEST_LOG"
 return $status
 }
+
+# Truncated once here, then appended to on every attempt inside
+# render_and_test_config, so a run that takes several attempts to converge
+# keeps all of them in the log, not just the last.
+: > "$NGINX_TEST_LOG"
 
 attempt=1
 while true; do
@@ -706,6 +722,15 @@ while true; do
     prune_mirror_host "$bad_host" && pruned_any=1
   done <<< "$bad_hosts"
   [ -z "$pruned_any" ] && die "Invalid nginx configuration generated (see above, or $NGINX_TEST_LOG) - named host(s) are not a known mirror, giving up"
+
+  # Arch and Chaotic AUR are mandatory (see the equivalent check on the
+  # initial load, above); pruning either down to empty would otherwise only
+  # surface next attempt as an empty "upstream" block, which nginx reports
+  # in different words entirely - not the "host not found" text bad_hosts
+  # looks for above - dying here with a clear reason instead of the
+  # generic "not a recognised dead-mirror error" that would follow.
+  [ "${#ARCH_MIRRORS[@]}" -eq 0 ] && die "Pruning left no Arch mirrors to serve from (see above, or $NGINX_TEST_LOG)"
+  [ "${#CHAOTIC_AUR_MIRRORS[@]}" -eq 0 ] && die "Pruning left no Chaotic AUR mirrors to serve from (see above, or $NGINX_TEST_LOG)"
 
   attempt=$((attempt + 1))
 done
