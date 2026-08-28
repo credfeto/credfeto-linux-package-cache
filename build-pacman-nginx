@@ -91,7 +91,14 @@ prune_mirror_host()
     IFS='|' read -r list _ _ _ array_name <<< "$spec"
     if [ -f "$list" ] && grep -qF "$host" "$list"; then
       info "Pruning unreachable mirror $host from $list"
-      grep -vF "$host" "$list" > "$list.tmp" && mv "$list.tmp" "$list"
+      # Not "grep -vF ... && mv": grep -v exits 1 (not 0) when the pruned
+      # host was the file's last surviving line, since it then has zero
+      # matching lines to output - that would skip the mv via && and leave
+      # the dead mirror in the file. The "|| true" makes the redirect (which
+      # always creates $list.tmp, even empty) the only thing that matters
+      # here, so mv always follows regardless of grep's own exit status.
+      grep -vF "$host" "$list" > "$list.tmp" || true
+      mv "$list.tmp" "$list"
       removed=0
     fi
     remove_mirror_from_array "$array_name" "$host" && removed=0
@@ -128,10 +135,12 @@ load_mirrors()
 {
   local matcher_fn=$1
   local list_file=$2
-  local -n out_array=$3
+  # See remove_mirror_from_array for why this isn't a name a caller's own
+  # array is likely to collide with.
+  local -n _out_array=$3
   local line match host_part
 
-  out_array=()
+  _out_array=()
   while read -r line
   do
     if [ -n "$line" ]; then
@@ -140,7 +149,7 @@ load_mirrors()
         host_part=${match%%|*}
         if is_resolvable "$host_part"; then
           echo " * $match"
-          out_array+=("$match")
+          _out_array+=("$match")
         else
           info "Skipping unresolvable mirror: $host_part"
           prune_mirror_host "$host_part"
@@ -148,7 +157,7 @@ load_mirrors()
       fi
     fi
   done < "$list_file"
-  echo "Found: ${#out_array[@]}"
+  echo "Found: ${#_out_array[@]}"
 }
 
 # Removes any entry from the named mirror array whose host (the text before
@@ -158,21 +167,31 @@ load_mirrors()
 # nginx naming some other host (e.g. dl.flathub.org) as unreachable.
 remove_mirror_from_array()
 {
-  local -n arr=$1
+  # Named "_target_array", not "arr", so a caller whose own array happens to
+  # be called "arr" doesn't hit bash's "circular name reference" error - a
+  # nameref can't share a name with its own target.
+  local -n _target_array=$1
   local host=$2
   local -a kept=()
   local entry removed=1
 
-  for entry in "${arr[@]}"; do
+  for entry in "${_target_array[@]}"; do
     if [ "${entry%%|*}" = "$host" ]; then
       removed=0
     else
       kept+=("$entry")
     fi
   done
-  arr=("${kept[@]}")
+  _target_array=("${kept[@]}")
   return $removed
 }
+
+# Everything below is the real, side-effecting run (sudo, rate-mirrors,
+# nginx -t, docker). Guarded so tests/*.bats can "source" this file to reach
+# the functions above without triggering any of it - "source" leaves
+# BASH_SOURCE[0] pointing at this file while $0 stays the sourcing script
+# (bats), so the guard is false and this whole block is skipped.
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
 BASEDIR="$(dirname "$(readlink -f "$0")")"
 OUTPUT="$BASEDIR/nginx.test.conf"
@@ -678,3 +697,5 @@ sudo cp "$OUTPUT" "/etc/nginx/nginx.conf"
 sudo nginx -s reload
 
 success "nginx config regenerated and reloaded"
+
+fi
