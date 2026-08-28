@@ -96,7 +96,13 @@ prune_mirror_host()
   removed=1
   for spec in "${MIRROR_SPECS[@]}"; do
     IFS='|' read -r list _ _ _ array_name <<< "$spec"
-    if [ -f "$list" ] && grep -qF "$host" "$list"; then
+    # Matches on "://$host/", not bare "$host": every mirrorlist line is a
+    # "Server = https://HOST/..." URL, so a bare substring match would also
+    # strip an unrelated, healthy mirror whose name contains this host as a
+    # substring (e.g. pruning mirror1.example.com would also match
+    # sub.mirror1.example.com). The scheme delimiter before and the path
+    # separator immediately after are exactly HOST's boundaries in that URL.
+    if [ -f "$list" ] && grep -qF "://$host/" "$list"; then
       info "Pruning unreachable mirror $host from $list"
       # Not "grep -vF ... && mv": grep -v exits 1 (not 0) when the pruned
       # host was the file's last surviving line, since it then has zero
@@ -104,7 +110,7 @@ prune_mirror_host()
       # the dead mirror in the file. The "|| true" makes the redirect (which
       # always creates $list.tmp, even empty) the only thing that matters
       # here, so mv always follows regardless of grep's own exit status.
-      grep -vF "$host" "$list" > "$list.tmp" || true
+      grep -vF "://$host/" "$list" > "$list.tmp" || true
       mv "$list.tmp" "$list"
       removed=0
     fi
@@ -127,6 +133,11 @@ needs_mirrorlist_refresh()
   file=$1
   marker="$file.ranked"
   [ -f "$file" ] || return 0
+  # A list pruned down to zero entries (every mirror it had went unreachable
+  # between re-ranks) must not wait out the rest of the staleness window
+  # with nothing to load - that's exactly the "stays broken until someone
+  # notices" failure mode this whole self-heal mechanism exists to avoid.
+  [ -s "$file" ] || return 0
   [ -f "$marker" ] || return 0
   [ -n "$(find "$marker" -mtime "+${MIRRORLIST_MAX_AGE_DAYS}" 2>/dev/null)" ]
 }

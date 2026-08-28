@@ -140,6 +140,17 @@ teardown() {
   needs_mirrorlist_refresh "$TEST_DIR/list"
 }
 
+@test "needs_mirrorlist_refresh is true when the file has been pruned down to empty, even with a fresh marker" {
+  # Regression test: pruning every mirror out of a list between re-ranks
+  # must not be left to wait out the rest of the staleness window with
+  # nothing left to load - that's the "stays broken until someone notices"
+  # failure mode this mechanism exists to avoid.
+  MIRRORLIST_MAX_AGE_DAYS=7
+  : > "$TEST_DIR/list"
+  touch "$TEST_DIR/list.ranked"
+  needs_mirrorlist_refresh "$TEST_DIR/list"
+}
+
 @test "needs_mirrorlist_refresh ignores the mirrorlist file's own mtime" {
   # Regression test for the staleness-clock bug fixed in round 2 of the
   # self-heal review: prune_mirror_host rewrites the mirrorlist file, which
@@ -158,7 +169,8 @@ teardown() {
   # file's only line, since it then has zero surviving lines to print. An
   # earlier "grep -vF ... && mv ..." skipped the mv whenever that happened,
   # silently leaving the dead mirror in the file.
-  echo "only.example.com" > "$TEST_DIR/arch"
+  # shellcheck disable=SC2016 # $repo/$arch are literal pacman.conf tokens, not shell variables
+  echo 'Server = https://only.example.com/archlinux/$repo/os/$arch' > "$TEST_DIR/arch"
   MIRROR_SPECS=("$TEST_DIR/arch|Arch|arch|is_arch_url|TEST_ARR")
   declare -a TEST_ARR=("only.example.com")
 
@@ -169,7 +181,8 @@ teardown() {
 }
 
 @test "prune_mirror_host removes the host from its mirrorlist file and array" {
-  printf 'bad.example.com\ngood.example.com\n' > "$TEST_DIR/arch"
+  # shellcheck disable=SC2016 # $repo/$arch are literal pacman.conf tokens, not shell variables
+  printf 'Server = https://bad.example.com/archlinux/$repo/os/$arch\nServer = https://good.example.com/archlinux/$repo/os/$arch\n' > "$TEST_DIR/arch"
   MIRROR_SPECS=("$TEST_DIR/arch|Arch|arch|is_arch_url|TEST_ARR")
   declare -a TEST_ARR=("bad.example.com" "good.example.com")
 
@@ -181,8 +194,27 @@ teardown() {
   [ "${TEST_ARR[0]}" = "good.example.com" ]
 }
 
+@test "prune_mirror_host does not remove an unrelated mirror whose name contains the pruned host as a substring" {
+  # Regression test: prune_mirror_host used to grep for the bare host, which
+  # matches anywhere in the line - pruning mirror1.example.com would also
+  # strip an unrelated sub.mirror1.example.com line. Matching on
+  # "://host/" (the URL's own host boundaries) fixes that.
+  # shellcheck disable=SC2016 # $repo/$arch are literal pacman.conf tokens, not shell variables
+  printf 'Server = https://mirror1.example.com/archlinux/$repo/os/$arch\nServer = https://sub.mirror1.example.com/archlinux/$repo/os/$arch\n' > "$TEST_DIR/arch"
+  MIRROR_SPECS=("$TEST_DIR/arch|Arch|arch|is_arch_url|TEST_ARR")
+  declare -a TEST_ARR=("mirror1.example.com" "sub.mirror1.example.com")
+
+  prune_mirror_host "mirror1.example.com"
+
+  run ! grep -q "://mirror1.example.com/" "$TEST_DIR/arch"
+  grep -q "sub.mirror1.example.com" "$TEST_DIR/arch"
+  [ "${#TEST_ARR[@]}" -eq 1 ]
+  [ "${TEST_ARR[0]}" = "sub.mirror1.example.com" ]
+}
+
 @test "prune_mirror_host returns failure for a host that is not known" {
-  echo "good.example.com" > "$TEST_DIR/arch"
+  # shellcheck disable=SC2016 # $repo/$arch are literal pacman.conf tokens, not shell variables
+  echo 'Server = https://good.example.com/archlinux/$repo/os/$arch' > "$TEST_DIR/arch"
   MIRROR_SPECS=("$TEST_DIR/arch|Arch|arch|is_arch_url|TEST_ARR")
   declare -a TEST_ARR=("good.example.com")
 
@@ -191,8 +223,10 @@ teardown() {
 }
 
 @test "prune_mirror_host checks every list in MIRROR_SPECS, not just one" {
-  echo "shared.example.com" > "$TEST_DIR/arch"
-  echo "shared.example.com" > "$TEST_DIR/chaotic"
+  # shellcheck disable=SC2016 # $repo/$arch are literal pacman.conf tokens, not shell variables
+  echo 'Server = https://shared.example.com/archlinux/$repo/os/$arch' > "$TEST_DIR/arch"
+  # shellcheck disable=SC2016 # $repo/$arch are literal pacman.conf tokens, not shell variables
+  echo 'Server = https://shared.example.com/$repo/$arch' > "$TEST_DIR/chaotic"
   MIRROR_SPECS=(
     "$TEST_DIR/arch|Arch|arch|is_arch_url|ARR_A"
     "$TEST_DIR/chaotic|Chaotic AUR|chaotic-aur|is_chaotic_aur_url|ARR_B"
