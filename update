@@ -47,7 +47,7 @@ chmod 644 "$BASEDIR/certs/flathub.local.pem"
 chmod 644 "$BASEDIR/certs/pacman.local.key"
 chmod 644 "$BASEDIR/certs/pacman.local.pem"
 
-"$BASEDIR/build-pacman-nginx"
+"$BASEDIR/build-pacman-nginx" || die "build-pacman-nginx failed"
 
 "$BASEDIR/firewall"
 
