@@ -19,6 +19,7 @@ Please ADD ALL Changes to the UNRELEASED SECTION and not a specific release
 - Fixed two latent bugs in build-pacman-nginx found while touching the file: an unescaped $uri in the chaotic-aur demo rewrite was being expanded by bash to nothing (silently generating a broken nginx rewrite), and the mirror-count summary lines printed the wrong values (missing array index, and a literal unexpanded variable name)
 - Fixed CachyOS mirror detection in build-pacman-nginx so nginx config regeneration no longer fails, and made zero CachyOS mirrors non-fatal so it can no longer block Arch/Chaotic-AUR/pacman/flathub updates
 - Fixed build-pacman-nginx generating an nginx config that always failed nginx -t: proxy_cache_valid's time argument does not support variables, so the pkg/flathub cache-time maps introduced by the direct-TLS feature never validated. Replaced with per-content-type location blocks using literal cache times
+- systemd unit for credfeto-linux-package-cache ran as User=markr with paths under /home/markr, but the repo is deployed at /root/credfeto-linux-package-cache on the hosts, causing flock to fail at CHDIR with Permission denied; unit now runs as User=root against /root/credfeto-linux-package-cache
 ### Changed
 - Re-enabled TLS on nginx's pacman.local (8889) and flathub.local (8777) vhosts using the already-generated local certs, gave immutable package/object files (.pkg.tar.zst, .sig, .filez, /repo/deltas/) a 60-day proxy cache lifetime instead of the blanket 24h default, added matching firewall rules, and made /ping respond identically to /health so it can serve as the Traefik health-check path directly against nginx
 - Moved pacman.local and flathub.local TLS back onto a single shared port (7777, matching what cache-proxy used to serve both on), distinguished by SNI instead of splitting them onto separate ports (8889/8777); no Traefik change is needed since it already points both pacman-service and flathub-service at port 7777
@@ -28,7 +29,9 @@ Please ADD ALL Changes to the UNRELEASED SECTION and not a specific release
 - Removed dead pacoloco.yaml config, cache-pacoloco docker volume, and unused arch-pkgs cache directory, since pacoloco was never actually wired into docker-compose.yml (pacman caching is handled by cache-proxy plus the host nginx from build-pacman-nginx)
 - Removed cache-proxy: the docker-compose service, its external cache-proxy volume, proxy-appsettings.json, PROXY_USER/proxy.local cert generation, the /cache/proxy directory setup, the LOCAL_IP/.env templating step it was the only consumer of, and its port 7777/7878 firewall rules. Traffic for pacman.markridgwell.com and flathub.markridgwell.com now goes straight to nginx (see the Changed entry above); AUR is unaffected, it uses the separate cache-aur app
 ### Deployment Changes
+
 <!--
 Releases that have at least been deployed to staging, BUT NOT necessarily released to live.  Changes should be moved from [Unreleased] into here as they are merged into the appropriate release branch
 -->
+
 ## [0.0.0] - Project created
