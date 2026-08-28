@@ -205,7 +205,7 @@ remove_mirror_from_array()
 }
 
 # Everything below is the real, side-effecting run (sudo, rate-mirrors,
-# nginx -t, docker). Guarded so tests/*.bats can "source" this file to reach
+# nginx -t, docker). Guarded so test/*.bats can "source" this file to reach
 # the functions above without triggering any of it - "source" leaves
 # BASH_SOURCE[0] pointing at this file while $0 stays the sourcing script
 # (bats), so the guard is false and this whole block is skipped.

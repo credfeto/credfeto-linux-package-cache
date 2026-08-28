@@ -122,20 +122,21 @@ teardown() {
 
 @test "needs_mirrorlist_refresh is true when the .ranked marker is missing" {
   MIRRORLIST_MAX_AGE_DAYS=7
-  touch "$TEST_DIR/list"
+  echo "mirror.example.com" > "$TEST_DIR/list"
   needs_mirrorlist_refresh "$TEST_DIR/list"
 }
 
 @test "needs_mirrorlist_refresh is false when the marker is fresh" {
   MIRRORLIST_MAX_AGE_DAYS=7
-  touch "$TEST_DIR/list" "$TEST_DIR/list.ranked"
+  echo "mirror.example.com" > "$TEST_DIR/list"
+  touch "$TEST_DIR/list.ranked"
   run needs_mirrorlist_refresh "$TEST_DIR/list"
   [ "$status" -ne 0 ]
 }
 
 @test "needs_mirrorlist_refresh is true when the marker is older than the max age" {
   MIRRORLIST_MAX_AGE_DAYS=7
-  touch "$TEST_DIR/list"
+  echo "mirror.example.com" > "$TEST_DIR/list"
   touch -d "10 days ago" "$TEST_DIR/list.ranked"
   needs_mirrorlist_refresh "$TEST_DIR/list"
 }
@@ -158,7 +159,7 @@ teardown() {
   # real re-rank (which touches the separate .ranked marker) should.
   MIRRORLIST_MAX_AGE_DAYS=7
   touch -d "10 days ago" "$TEST_DIR/list.ranked"
-  touch "$TEST_DIR/list"
+  echo "mirror.example.com" > "$TEST_DIR/list"
   needs_mirrorlist_refresh "$TEST_DIR/list"
 }
 
