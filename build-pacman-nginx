@@ -66,10 +66,17 @@ is_cachyos_url()
   fi
 }
 
+# A single failed lookup permanently prunes the mirror (until the next
+# weekly re-rank), so a lone transient resolver hiccup shouldn't be enough
+# to condemn an otherwise-healthy mirror - retry a couple of times first.
 is_resolvable()
 {
   host=$1
-  getent hosts "$host" > /dev/null 2>&1
+  for _ in 1 2 3; do
+    getent hosts "$host" > /dev/null 2>&1 && return 0
+    sleep 1
+  done
+  return 1
 }
 
 # Drops a dead mirror host from every mirrorlist file that mentions it (all
