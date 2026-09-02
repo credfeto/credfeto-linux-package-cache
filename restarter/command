@@ -1,9 +1,9 @@
 #! /bin/sh
 
 
-while true; do 
+while true; do
   echo "Sleeping..."
-  sleep 60; 
+  sleep 60;
 
   echo "Find Unhealthy"
   docker ps -q -f health=unhealthy -f name=linuxpkg
