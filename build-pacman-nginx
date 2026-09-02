@@ -402,7 +402,6 @@ for ((i = 0; i < ${#CHAOTIC_AUR_MIRRORS[@]}; i++)); do
             proxy_set_header Host $MIRROR;
             proxy_http_version  1.1;
             proxy_set_header    Connection "";
-            rewrite ^ /demo\$uri break;
         }
     }
 
