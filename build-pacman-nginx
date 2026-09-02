@@ -398,6 +398,11 @@ for ((i = 0; i < ${#ARCH_MIRRORS[@]}; i++)); do
             # \$upstream_http_location to empty - confirmed live: without the
             # set, nginx fails with 'invalid URL prefix in ""'.
             set \$redirect_target \$upstream_http_location;
+            # Only https targets: a compromised mirror's Location must not be
+            # able to point this proxy at internal plain-http services (SSRF).
+            # Also turns an empty/relative Location into a clean 502, which
+            # the front end's proxy_next_upstream retries on another mirror.
+            if (\$redirect_target !~ ^https://) { return 502; }
             proxy_pass \$redirect_target;
             proxy_ssl_server_name on;
             proxy_http_version  1.1;
@@ -444,6 +449,11 @@ for ((i = 0; i < ${#CHAOTIC_AUR_MIRRORS[@]}; i++)); do
             # \$upstream_http_location to empty - confirmed live: without the
             # set, nginx fails with 'invalid URL prefix in ""'.
             set \$redirect_target \$upstream_http_location;
+            # Only https targets: a compromised mirror's Location must not be
+            # able to point this proxy at internal plain-http services (SSRF).
+            # Also turns an empty/relative Location into a clean 502, which
+            # the front end's proxy_next_upstream retries on another mirror.
+            if (\$redirect_target !~ ^https://) { return 502; }
             proxy_pass \$redirect_target;
             proxy_ssl_server_name on;
             proxy_http_version  1.1;
@@ -495,6 +505,11 @@ if [ "${#CACHYOS_MIRRORS[@]}" -gt 0 ]; then
             # \$upstream_http_location to empty - confirmed live: without the
             # set, nginx fails with 'invalid URL prefix in ""'.
             set \$redirect_target \$upstream_http_location;
+            # Only https targets: a compromised mirror's Location must not be
+            # able to point this proxy at internal plain-http services (SSRF).
+            # Also turns an empty/relative Location into a clean 502, which
+            # the front end's proxy_next_upstream retries on another mirror.
+            if (\$redirect_target !~ ^https://) { return 502; }
             proxy_pass \$redirect_target;
             proxy_ssl_server_name on;
             proxy_http_version  1.1;
