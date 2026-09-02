@@ -364,10 +364,21 @@ for ((i = 0; i < ${#ARCH_MIRRORS[@]}; i++)); do
 
     echo "Arch Server $i: $MIRROR"
 
+    # A mirror answering with a redirect is followed here, server-side, rather
+    # than relaying the 3xx: the front-end cache only stores 200s, and a client
+    # restricted to reaching only this cache cannot follow a Location pointing
+    # at the public internet (the chaotic.cx fleet became redirect-only, and any
+    # other mirror kind could make the same move). recursive_error_pages lets a
+    # multi-hop redirect chain re-enter @follow_redirect; nginx's internal
+    # redirect cap of 10 bounds a redirect loop. @follow_redirect deliberately
+    # sets its own proxy_set_header (cutting off inheritance of the mirror's
+    # Host) so the Host sent is the redirect target's own.
     cat << EOF >> "$OUTPUT"
     server {
 
         listen 127.0.0.1:$PORT;
+
+        recursive_error_pages on;
 
         location / {
             rewrite ^/repo/(.*)$ /\$1  break;
@@ -377,6 +388,22 @@ for ((i = 0; i < ${#ARCH_MIRRORS[@]}; i++)); do
             proxy_set_header Host $MIRROR;
             proxy_http_version  1.1;
             proxy_set_header    Connection "";
+            proxy_intercept_errors on;
+            error_page 301 302 303 307 308 = @follow_redirect;
+        }
+
+        location @follow_redirect {
+            # Captured via set (rewrite phase) because by the time a variable
+            # proxy_pass is evaluated the new upstream has already reset
+            # \$upstream_http_location to empty - confirmed live: without the
+            # set, nginx fails with 'invalid URL prefix in ""'.
+            set \$redirect_target \$upstream_http_location;
+            proxy_pass \$redirect_target;
+            proxy_ssl_server_name on;
+            proxy_http_version  1.1;
+            proxy_set_header    Connection "";
+            proxy_intercept_errors on;
+            error_page 301 302 303 307 308 = @follow_redirect;
         }
     }
 
@@ -389,10 +416,15 @@ for ((i = 0; i < ${#CHAOTIC_AUR_MIRRORS[@]}; i++)); do
 
     echo "Chaotic AUR Server $i: $MIRROR"
 
+    # Same server-side redirect following as the Arch blocks above; for
+    # chaotic-aur it is load-bearing today, since every *.chaotic.cx "mirror"
+    # is a redirector answering 303 rather than serving files.
     cat << EOF >> "$OUTPUT"
     server {
 
         listen 127.0.0.1:$PORT;
+
+        recursive_error_pages on;
 
         location / {
             rewrite ^/repo/(.*)$ /\$1  break;
@@ -402,6 +434,22 @@ for ((i = 0; i < ${#CHAOTIC_AUR_MIRRORS[@]}; i++)); do
             proxy_set_header Host $MIRROR;
             proxy_http_version  1.1;
             proxy_set_header    Connection "";
+            proxy_intercept_errors on;
+            error_page 301 302 303 307 308 = @follow_redirect;
+        }
+
+        location @follow_redirect {
+            # Captured via set (rewrite phase) because by the time a variable
+            # proxy_pass is evaluated the new upstream has already reset
+            # \$upstream_http_location to empty - confirmed live: without the
+            # set, nginx fails with 'invalid URL prefix in ""'.
+            set \$redirect_target \$upstream_http_location;
+            proxy_pass \$redirect_target;
+            proxy_ssl_server_name on;
+            proxy_http_version  1.1;
+            proxy_set_header    Connection "";
+            proxy_intercept_errors on;
+            error_page 301 302 303 307 308 = @follow_redirect;
         }
     }
 
@@ -421,10 +469,13 @@ if [ "${#CACHYOS_MIRRORS[@]}" -gt 0 ]; then
         # pacman.local location below forwards the URI through unrewritten). Swap that
         # fixed "/repo/cachyos" prefix for this mirror's own path prefix before proxying,
         # since real CachyOS mirrors don't agree on what that prefix is.
+        # Same server-side redirect following as the Arch blocks above.
         cat << EOF >> "$OUTPUT"
     server {
 
         listen 127.0.0.1:$PORT;
+
+        recursive_error_pages on;
 
         location / {
             rewrite ^/repo/cachyos/(.*)$ $MIRROR_PATH/\$1  break;
@@ -434,6 +485,22 @@ if [ "${#CACHYOS_MIRRORS[@]}" -gt 0 ]; then
             proxy_set_header Host $MIRROR_HOST;
             proxy_http_version  1.1;
             proxy_set_header    Connection "";
+            proxy_intercept_errors on;
+            error_page 301 302 303 307 308 = @follow_redirect;
+        }
+
+        location @follow_redirect {
+            # Captured via set (rewrite phase) because by the time a variable
+            # proxy_pass is evaluated the new upstream has already reset
+            # \$upstream_http_location to empty - confirmed live: without the
+            # set, nginx fails with 'invalid URL prefix in ""'.
+            set \$redirect_target \$upstream_http_location;
+            proxy_pass \$redirect_target;
+            proxy_ssl_server_name on;
+            proxy_http_version  1.1;
+            proxy_set_header    Connection "";
+            proxy_intercept_errors on;
+            error_page 301 302 303 307 308 = @follow_redirect;
         }
     }
 
@@ -589,6 +656,9 @@ cat << EOF >> "$OUTPUT"
 
         location ~* ^/repo/chaotic-aur/.*\.pkg\.tar\.zst(\.sig)?\$ {
             proxy_pass http://chaotic-aur-mirrors;
+            # The chaotic redirectors intermittently crash with a 500 of their
+            # own; retry the next mirror in the upstream instead of failing.
+            proxy_next_upstream error timeout http_500 http_502 http_503;
             proxy_http_version  1.1;
             proxy_set_header    Connection "";
 
@@ -608,6 +678,9 @@ cat << EOF >> "$OUTPUT"
 
         location /repo/chaotic-aur/ {
             proxy_pass http://chaotic-aur-mirrors;
+            # The chaotic redirectors intermittently crash with a 500 of their
+            # own; retry the next mirror in the upstream instead of failing.
+            proxy_next_upstream error timeout http_500 http_502 http_503;
             proxy_http_version  1.1;
             proxy_set_header    Connection "";
 
