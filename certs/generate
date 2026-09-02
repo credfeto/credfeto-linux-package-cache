@@ -8,10 +8,10 @@ die() {
 
 BASEDIR=$(dirname "$(readlink -f "$0")")
 
-[ -z "$BASEDIR" ] && die "BASEDIR Not defiled"
+[ -z "$BASEDIR" ] && die "BASEDIR Not defined"
 
 DOMAIN=$1
-[ -z "$DOMAIN" ] && die "DOMAIN Not defiled"
+[ -z "$DOMAIN" ] && die "DOMAIN Not defined"
 
 ALGORITHM=rsa:2048
 
