@@ -32,7 +32,7 @@ services:
       - cache
 
   cache-restarter:
-    image: docker-registry.markridgwell.com/credfeto/cache-restarter:latest
+    image: ghcr.io/credfeto/cache-restarter:latest
     container_name: cache-restarter
     hostname: cache-restarter
     restart: always
