@@ -12,25 +12,6 @@ services:
     networks:
       - cache
 
-  cache-dozzle:
-    image: amir20/dozzle:latest
-    container_name: cache-dozzle
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "8080:8080/tcp"
-    environment:
-      DOZZLE_HOSTNAME: linux-cache
-    restart: always
-    healthcheck:
-      test: ["CMD", "/dozzle", "healthcheck"]
-      interval: 3s
-      timeout: 30s
-      retries: 5
-      start_period: 30s
-    networks:
-      - cache
-
   cache-restarter:
     image: ghcr.io/credfeto/cache-restarter:latest
     container_name: cache-restarter
@@ -46,25 +27,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
-  cache-aur:
-    image: ${AUR_IMAGE:-credfeto/aur-proxy:stable}
-    container_name: cache-aur
-    hostname: cache-aur
-    restart: always
-    stop_grace_period: 5s
-    stop_signal: SIGINT
-    volumes:
-      - cache-aur-metadata:/data/metadata:rw
-      - cache-aur-repos:/data/repos:rw
-      - ./certs/aur.local.pfx:/usr/src/app/server.pfx:ro
-    ports:
-      - "7776:8081/tcp"
-      - "7776:8081/udp"
-    labels:
-      - "autoheal=linuxpkg"
-    networks:
-      - cache
-
 networks:
   cache:
     driver: bridge
@@ -72,12 +34,6 @@ networks:
 
 
 volumes:
-  cache-aur-metadata:
-    name: cache-aur-metadata
-    external: true
-  cache-aur-repos:
-    name: cache-aur-repos
-    external: true
   cache-pacman:
     name: cache-pacman
     external: true
