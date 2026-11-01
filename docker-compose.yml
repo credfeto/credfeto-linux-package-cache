@@ -8,7 +8,8 @@ services:
     restart: always
     environment:
       WATCHTOWER_NOTIFICATIONS_HOSTNAME: linux-cache
-      WATCHTOWER_POLL_INTERVAL: 3600
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_SCHEDULE: "${WATCHTOWER_SCHEDULE:-0 42 * * * *}"
     networks:
       - cache
 
