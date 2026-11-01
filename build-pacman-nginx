@@ -400,8 +400,10 @@ for ((i = 0; i < ${#ARCH_MIRRORS[@]}; i++)); do
             set \$redirect_target \$upstream_http_location;
             # Only https targets: a compromised mirror's Location must not be
             # able to point this proxy at internal plain-http services (SSRF).
-            # Also turns an empty/relative Location into a clean 502, which
-            # the front end's proxy_next_upstream retries on another mirror.
+            # Also turns an empty/relative Location into a clean 502. The front
+            # end's package location retries that on another mirror; its
+            # database location keeps the default proxy_next_upstream (error
+            # timeout), so there the 502 goes straight back to the client.
             if (\$redirect_target !~ ^https://) { return 502; }
             proxy_pass \$redirect_target;
             proxy_ssl_server_name on;
@@ -452,7 +454,9 @@ for ((i = 0; i < ${#CHAOTIC_AUR_MIRRORS[@]}; i++)); do
             # Only https targets: a compromised mirror's Location must not be
             # able to point this proxy at internal plain-http services (SSRF).
             # Also turns an empty/relative Location into a clean 502, which
-            # the front end's proxy_next_upstream retries on another mirror.
+            # both front end chaotic-aur locations retry on another mirror.
+            # Only the package location also retries a 404; the database
+            # location retries 500/502/503 but returns a 404 as is.
             if (\$redirect_target !~ ^https://) { return 502; }
             proxy_pass \$redirect_target;
             proxy_ssl_server_name on;
@@ -507,8 +511,10 @@ if [ "${#CACHYOS_MIRRORS[@]}" -gt 0 ]; then
             set \$redirect_target \$upstream_http_location;
             # Only https targets: a compromised mirror's Location must not be
             # able to point this proxy at internal plain-http services (SSRF).
-            # Also turns an empty/relative Location into a clean 502, which
-            # the front end's proxy_next_upstream retries on another mirror.
+            # Also turns an empty/relative Location into a clean 502. The front
+            # end's package location retries that on another mirror; its
+            # database location keeps the default proxy_next_upstream (error
+            # timeout), so there the 502 goes straight back to the client.
             if (\$redirect_target !~ ^https://) { return 502; }
             proxy_pass \$redirect_target;
             proxy_ssl_server_name on;
@@ -633,6 +639,10 @@ cat << EOF >> "$OUTPUT"
 
         location ~* ^/repo/archlinux/.*\.pkg\.tar\.zst(\.sig)?\$ {
             proxy_pass http://archlinux-mirrors;
+            # Package files are immutable, so a 404 just means this mirror has
+            # not synced the file yet; try the next mirror instead of failing.
+            proxy_next_upstream error timeout http_404 http_500 http_502 http_503 http_504;
+            proxy_next_upstream_tries 4;
             proxy_http_version  1.1;
             proxy_set_header    Connection "";
 
@@ -672,8 +682,10 @@ cat << EOF >> "$OUTPUT"
         location ~* ^/repo/chaotic-aur/.*\.pkg\.tar\.zst(\.sig)?\$ {
             proxy_pass http://chaotic-aur-mirrors;
             # The chaotic redirectors intermittently crash with a 500 of their
-            # own; retry the next mirror in the upstream instead of failing.
-            proxy_next_upstream error timeout http_500 http_502 http_503;
+            # own, and a lagging mirror answers 404 for a package it has not
+            # synced yet; retry the next mirror in the upstream for either.
+            proxy_next_upstream error timeout http_404 http_500 http_502 http_503 http_504;
+            proxy_next_upstream_tries 4;
             proxy_http_version  1.1;
             proxy_set_header    Connection "";
 
@@ -719,6 +731,9 @@ if [ "${#CACHYOS_MIRRORS[@]}" -gt 0 ]; then
 
         location ~* ^/repo/cachyos/.*\.pkg\.tar\.zst(\.sig)?\$ {
             proxy_pass http://cachyos-mirrors;
+            # Same lagging-mirror 404 retry as the archlinux package location.
+            proxy_next_upstream error timeout http_404 http_500 http_502 http_503 http_504;
+            proxy_next_upstream_tries 4;
             proxy_http_version  1.1;
             proxy_set_header    Connection "";
 
