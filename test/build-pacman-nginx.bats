@@ -313,3 +313,55 @@ LIST
   [ "$status" -eq 1 ]
   [[ "$output" == *"boom"* ]]
 }
+
+# --- pacman.local proxy_next_upstream ---
+#
+# The front-end server block is a heredoc inside the side-effecting flow the
+# source guard skips (and rendering it runs sudo nginx -t), so these read the
+# location blocks straight out of the script text instead of rendering them.
+
+# Prints the front-end location block whose opening line contains $1, up to
+# its own closing brace at the location's indent.
+location_block() {
+  awk -v start="$1" '
+    !found && index($0, start) { found = 1 }
+    found { print }
+    found && /^        }$/ { exit }
+  ' "$SCRIPT"
+}
+
+@test "archlinux package location retries the next mirror on 404" {
+  block=$(location_block 'location ~* ^/repo/archlinux/')
+  [[ "$block" == *"proxy_next_upstream error timeout http_404 http_500 http_502 http_503 http_504;"* ]]
+  [[ "$block" == *"proxy_next_upstream_tries 4;"* ]]
+}
+
+@test "chaotic-aur package location retries the next mirror on 404" {
+  block=$(location_block 'location ~* ^/repo/chaotic-aur/')
+  [[ "$block" == *"proxy_next_upstream error timeout http_404 http_500 http_502 http_503 http_504;"* ]]
+  [[ "$block" == *"proxy_next_upstream_tries 4;"* ]]
+}
+
+@test "cachyos package location retries the next mirror on 404" {
+  block=$(location_block 'location ~* ^/repo/cachyos/')
+  [[ "$block" == *"proxy_next_upstream error timeout http_404 http_500 http_502 http_503 http_504;"* ]]
+  [[ "$block" == *"proxy_next_upstream_tries 4;"* ]]
+}
+
+@test "archlinux database location does not retry on 404" {
+  block=$(location_block 'location /repo/archlinux/ {')
+  [[ "$block" == *"proxy_pass http://archlinux-mirrors;"* ]]
+  [[ "$block" != *"http_404"* ]]
+}
+
+@test "chaotic-aur database location does not retry on 404" {
+  block=$(location_block 'location /repo/chaotic-aur/ {')
+  [[ "$block" == *"proxy_pass http://chaotic-aur-mirrors;"* ]]
+  [[ "$block" != *"http_404"* ]]
+}
+
+@test "cachyos database location does not retry on 404" {
+  block=$(location_block 'location ~ ^/repo/cachyos {')
+  [[ "$block" == *"proxy_pass http://cachyos-mirrors;"* ]]
+  [[ "$block" != *"http_404"* ]]
+}
