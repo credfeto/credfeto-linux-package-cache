@@ -33,6 +33,21 @@ Additional recommended install
   * `https://pacman.example.com` points to ``https://<server>:7777`` (SNI: pacman.local)
   * `https://flathub.example.com` points to ``https://<server>:7777`` (SNI: flathub.local)
 
+### Watchtower update schedule
+
+The `cache-watchtower` service checks for updated container images on a cron schedule set by
+`WATCHTOWER_SCHEDULE`. The default is `0 42 * * * *`, which runs at 42 minutes past every hour.
+
+Watchtower uses a 6-field cron expression with seconds first: `second minute hour day-of-month month day-of-week`.
+
+To override the schedule, create a `.env` file next to `docker-compose.yml` containing, for example:
+
+```bash
+WATCHTOWER_SCHEDULE=0 15 3 * * *
+```
+
+Old images are removed after a container is updated, because `WATCHTOWER_CLEANUP` is enabled.
+
 ## Client Setup
 
 ### pacman.conf
