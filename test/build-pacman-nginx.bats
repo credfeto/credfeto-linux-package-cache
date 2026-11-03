@@ -333,19 +333,22 @@ location_block() {
 @test "archlinux package location retries the next mirror on 404" {
   block=$(location_block 'location ~* ^/repo/archlinux/')
   [[ "$block" == *"proxy_next_upstream error timeout http_404 http_500 http_502 http_503 http_504;"* ]]
-  [[ "$block" == *"proxy_next_upstream_tries 4;"* ]]
+  [[ "$block" == *"proxy_next_upstream_tries 10;"* ]]
+  [[ "$block" == *"proxy_next_upstream_timeout 30s;"* ]]
 }
 
 @test "chaotic-aur package location retries the next mirror on 404" {
   block=$(location_block 'location ~* ^/repo/chaotic-aur/')
   [[ "$block" == *"proxy_next_upstream error timeout http_404 http_500 http_502 http_503 http_504;"* ]]
-  [[ "$block" == *"proxy_next_upstream_tries 4;"* ]]
+  [[ "$block" == *"proxy_next_upstream_tries 10;"* ]]
+  [[ "$block" == *"proxy_next_upstream_timeout 30s;"* ]]
 }
 
 @test "cachyos package location retries the next mirror on 404" {
   block=$(location_block 'location ~* ^/repo/cachyos/')
   [[ "$block" == *"proxy_next_upstream error timeout http_404 http_500 http_502 http_503 http_504;"* ]]
-  [[ "$block" == *"proxy_next_upstream_tries 4;"* ]]
+  [[ "$block" == *"proxy_next_upstream_tries 10;"* ]]
+  [[ "$block" == *"proxy_next_upstream_timeout 30s;"* ]]
 }
 
 @test "archlinux database location does not retry on 404" {

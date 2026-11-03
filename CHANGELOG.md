@@ -15,6 +15,7 @@ Please ADD ALL Changes to the UNRELEASED SECTION and not a specific release
 - Added .ai-instructions and ai/local/index.md from cs-template standard
 - bats unit tests (tests/build-pacman-nginx.bats) covering every helper function in build-pacman-nginx, including the mirror self-heal functions added in prior entries; build-pacman-nginx now guards its side-effecting main flow (sudo, rate-mirrors, nginx -t, docker) behind a BASH_SOURCE-vs-$0 check so it can be sourced for testing without running any of it
 ### Fixed
+- Raised proxy_next_upstream_tries from 4 to 10 (with a 30s proxy_next_upstream_timeout) for the archlinux, chaotic-aur and cachyos package-file locations; with only 4 tries a freshly published package or .sig still returned 404/500 to pacman whenever the 4 mirrors picked had not synced it yet, failing ansible-pull and pacman-sync several times a day
 - Fixed missing trailing newline in firewall script
 - Fixed typo in credfeto-linux-package-cache.service WorkingDirectory (credfeto-linx-package-cache -> credfeto-linux-package-cache) that caused the systemd timer to fail at CHDIR on every scheduled run, silently preventing nginx mirror config regeneration
 - Fixed two latent bugs in build-pacman-nginx found while touching the file: an unescaped $uri in the chaotic-aur demo rewrite was being expanded by bash to nothing (silently generating a broken nginx rewrite), and the mirror-count summary lines printed the wrong values (missing array index, and a literal unexpanded variable name)
