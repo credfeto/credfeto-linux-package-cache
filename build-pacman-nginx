@@ -217,6 +217,9 @@ NGINX_TEST_LOG="$BASEDIR/nginx-test.log"
 
 ARCH_BASE_PORT=8000
 CHAOTIC_AUR_BASE_PORT=9000
+# Where the chaotic-aur builds are published first; the *.chaotic.cx
+# redirectors point at it and at mirrors that sync from it.
+CHAOTIC_AUR_ORIGIN=builds.garudalinux.org
 CACHYOS_BASE_PORT=10000
 
 MIRRORLIST_MAX_AGE_DAYS=7
@@ -694,6 +697,13 @@ cat << EOF >> "$OUTPUT"
             # bound the total retry time so a genuine miss still fails fast.
             proxy_next_upstream_tries 10;
             proxy_next_upstream_timeout 30s;
+            # Every *.chaotic.cx redirector sends a request to the same few
+            # backend mirrors, so for a package published minutes ago all the
+            # tries above can fail together while the build origin already has
+            # the file (seen 2026-11-13: claude-code .sig 500 on every mirror,
+            # 200 from the origin). Fall back to the origin before failing.
+            proxy_intercept_errors on;
+            error_page 404 500 502 503 504 = @chaotic_aur_origin;
             proxy_http_version  1.1;
             proxy_set_header    Connection "";
 
@@ -709,6 +719,34 @@ cat << EOF >> "$OUTPUT"
             proxy_cache_lock    on;
             add_header Cache-Control \$cache_header always;
             add_header X-Cache-Status \$upstream_cache_status;
+        }
+
+        location @chaotic_aur_origin {
+            # Last resort for chaotic-aur package files only (never the
+            # databases, which must keep following the mirrors). A variable
+            # proxy_pass is resolved per request via the resolver above, so an
+            # origin DNS failure can't stop nginx from starting.
+            set \$chaotic_aur_origin https://$CHAOTIC_AUR_ORIGIN;
+            # Same cache key as the package location (taken before the
+            # rewrite), so a file fetched from the origin is a cache HIT there.
+            set \$chaotic_aur_cache_key \$scheme://\$host\$uri\$is_args\$query_string;
+            rewrite ^/repo/(.*)\$ /repos/\$1 break;
+            proxy_pass \$chaotic_aur_origin;
+            proxy_ssl_server_name on;
+            proxy_set_header Host $CHAOTIC_AUR_ORIGIN;
+            proxy_http_version  1.1;
+            proxy_set_header    Connection "";
+
+            proxy_buffers       16 256k;
+            proxy_buffer_size   256k;
+            proxy_cache_key     \$chaotic_aur_cache_key;
+            proxy_cache_valid   200 302  60d;
+            proxy_cache_valid   404      30s;
+            proxy_cache_bypass  \$arg_should_bypass_cache;
+            proxy_cache_lock    on;
+            add_header Cache-Control \$cache_header always;
+            add_header X-Cache-Status \$upstream_cache_status;
+            add_header X-Cache-Origin "chaotic-aur-origin" always;
         }
 
         location /repo/chaotic-aur/ {

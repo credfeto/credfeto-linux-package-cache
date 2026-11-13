@@ -368,3 +368,21 @@ location_block() {
   [[ "$block" == *"proxy_pass http://cachyos-mirrors;"* ]]
   [[ "$block" != *"http_404"* ]]
 }
+
+@test "chaotic-aur package location falls back to the build origin" {
+  block=$(location_block 'location ~* ^/repo/chaotic-aur/')
+  [[ "$block" == *"proxy_intercept_errors on;"* ]]
+  [[ "$block" == *"error_page 404 500 502 503 504 = @chaotic_aur_origin;"* ]]
+}
+
+@test "chaotic-aur origin fallback keeps the package cache key" {
+  block=$(location_block 'location @chaotic_aur_origin {')
+  [[ "$block" == *'rewrite ^/repo/(.*)\$ /repos/\$1 break;'* ]]
+  [[ "$block" == *'proxy_cache_key     \$chaotic_aur_cache_key;'* ]]
+  [[ "$block" != *"error_page"* ]]
+}
+
+@test "chaotic-aur database location does not fall back to the origin" {
+  block=$(location_block 'location /repo/chaotic-aur/ {')
+  [[ "$block" != *"@chaotic_aur_origin"* ]]
+}
